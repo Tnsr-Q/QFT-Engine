@@ -42,10 +42,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install JAX dependencies
-        run: |
-          pip install "jax[cpu]"
-
       - name: Run Bootstrap & JAX Hessian Tests
         run: |
           pytest tests/test_bootstrap_jax.py -v --junitxml=results_bootstrap.xml
