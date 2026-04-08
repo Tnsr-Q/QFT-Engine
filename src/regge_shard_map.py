@@ -67,7 +67,8 @@ class ShardedReggeSolver:
             l_new = l - f_val / (df_dl + 1e-12)
             return i + 1, l_new, f_val
 
-        _, l_final, _ = lax.while_loop(cond, body, (0, l_init, 1.0))
+        f0 = ShardedReggeSolver._pole_condition_real(l_init, s_val, delta_mean)
+        _, l_final, _ = lax.while_loop(cond, body, (0, l_init, f0))
         return l_final
 
     def _process_chunk(
@@ -86,13 +87,18 @@ class ShardedReggeSolver:
 
     def scan_regge_trajectory_sharded(self, delta_at_t: jnp.ndarray) -> jnp.ndarray:
         l0 = jnp.ones_like(self.t_grid) * 1.95
-        sharded_fn = shard_map(
-            self._process_chunk,
+        common_kwargs = dict(
             mesh=self.mesh,
             in_specs=(self.shard_spec, self.shard_spec, self.shard_spec),
             out_specs=self.shard_spec,
-            check_rep=False,
         )
+        try:
+            sharded_fn = shard_map(self._process_chunk, check_vma=False, **common_kwargs)
+        except TypeError:
+            try:
+                sharded_fn = shard_map(self._process_chunk, check_rep=False, **common_kwargs)
+            except TypeError:
+                sharded_fn = shard_map(self._process_chunk, **common_kwargs)
         return sharded_fn(self.s_cross, l0, delta_at_t)
 
     def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
