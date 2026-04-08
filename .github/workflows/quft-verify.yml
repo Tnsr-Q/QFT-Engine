@@ -1,3 +1,8 @@
+name: QUFT Verify
+
+on:
+  push:
+  pull_request:
 name: QUFT Verification Suite
 
 on:
@@ -11,6 +16,15 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install base dependencies
     strategy:
       matrix:
         python-version: ['3.10', '3.11']
@@ -28,6 +42,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Bootstrap & JAX Hessian Tests
+        run: |
+          pytest tests/test_bootstrap_jax.py -v --junitxml=results_bootstrap.xml
+          pytest tests/test_regression.py tests/test_nonperturbative_unitarity.py -v --junitxml=results_opt.xml
       - name: Run RGE & Stability Tests
         run: |
           if [ -f tests/test_rge_solver.py ] && [ -f tests/test_spectral_rep.py ]; then
