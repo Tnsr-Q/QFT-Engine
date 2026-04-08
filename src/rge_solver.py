@@ -21,10 +21,10 @@ class SIQGRGESolver:
 
     @staticmethod
     def _beta_f2(f2: float, lam_HS: float, xi_H: float) -> float:
-        """β_{f2} = 1-loop AF + 2-loop pure grav screening + 2-loop SM cross-term"""
-        b1 = -133.0 / (20.0 * T16) * f2**3
-        b2_grav = (5196.0 / 5.0) / T16_SQ * f2**5
-        b2_sm = -12.0 * lam_HS * xi_H**2 / T16_SQ * f2**3
+        """Return raw loop coefficients for β_{f2}; rhs() applies the overall /T16 normalization."""
+        b1 = -(133.0 / 20.0) * f2**3
+        b2_grav = (5196.0 / 5.0) / T16 * f2**5
+        b2_sm = -12.0 * lam_HS * xi_H**2 / T16 * f2**3
         return b1 + b2_grav + b2_sm
 
     def rhs(self, t: float, g: np.ndarray) -> np.ndarray:
