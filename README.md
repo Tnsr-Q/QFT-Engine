@@ -41,9 +41,13 @@ large parameter scans and memory-constrained training:
 
 - `src/regge_shard_map.py`: JAX `shard_map`-based Regge trajectory scanning with
   explicit fakeon virtualization certification (`VERIFIED`/`PENDING`).
+- `src/regge_shard_map_profiler.py`: profiled `shard_map` variant with
+  `jax.profiler` traces plus host/JAX memory metadata.
 - `src/callbacks/zero3_hessian_pl.py`: PyTorch Lightning callback for
   ZeRO-3/FSDP-compatible Hessian spectrum monitoring, PL-condition checks, and
   adaptive learning-rate updates.
+- `src/callbacks/zero3_compressed_hessian_pl.py`: ZeRO-3/FSDP callback variant
+  with optional 1-bit gradient compression + error feedback.
 
 ### JAX shard_map solver quickstart
 
