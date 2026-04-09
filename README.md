@@ -45,18 +45,15 @@ This repository is best understood as a **verification stack** for research comp
 
 ## Architecture
 
-<p align="center">
-  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
-</p>
+
 
 <p align="center">
   <em>End-to-end data flow across validation, solver execution, spectral analysis, topology coordination, logging, serialization, and downstream system output.</em>
 </p>
 
-> Recommended repo placement for the image above:
->
-> `assets/qft-engine-data-flow.png`
-
+<p align="center">
+  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
+</p>
 ---
 
 ## Why this project stands out
