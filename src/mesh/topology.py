@@ -62,6 +62,8 @@ class JAXMeshAdapter(DeviceTopology):
         from jax.sharding import Mesh, NamedSharding, PartitionSpec
 
         self.devices = devices or jax.devices()
+        if not mesh_axes:
+            raise ValueError("mesh_axes must contain at least one axis name")
         n_axes = len(mesh_axes)
         shape = (-1,) + (1,) * (n_axes - 1) if n_axes > 1 else (-1,)
         self.mesh = Mesh(np.array(self.devices).reshape(shape), mesh_axes)
