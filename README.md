@@ -25,6 +25,8 @@ The engine spans:
 | JIT / Auto-diff | `jax` (x64, jvp/vjp, jit, vmap, pmap, shard_map) |
 | Distributed Training | `pytorch-lightning` + ZeRO-3 / FSDP / DeepSpeed |
 | Precision modes | FP64 → FP32 → FP8 (e4m3fn) with error feedback |
+| Schema contracts | Pydantic `PhysicsPredicate` + `@enforce_schema` (`src/proto/`) |
+| Mesh abstraction | `UnifiedMesh` singleton with JAX/PyTorch adapters (`src/mesh/`) |
 | Tolerance governance | Dynamic ledger (`src/tolerance/`) + regime detector |
 | Observability | TensorBoard + `jax.profiler` + GCS upload |
 | Compute backends | CPU · GPU · Multi-device · GCE preemptible |
@@ -48,32 +50,57 @@ QFT-Engine/
 │   ├── regge_bootstrap.py         ← Regge pole tracking on bootstrap solution
 │   ├── optimizer.py               ← Gauss-Newton Hessian, PL-condition, Lyapunov
 │   ├── hessian_jax.py             ← JAX HVP, Lanczos eigenvalue (JAXHessianEstimator)
+│   ├── hessian_qjax.py            ← Quantized JAX Hessian (FP8 precision)
+│   ├── regge_jax_solver.py        ← JAX-native Regge pole tracker (JAXReggePoleTracker)
 │   ├── regge_vmap_solver.py       ← Single-device vmap Regge solver
 │   ├── regge_pmap_solver.py       ← Multi-device pmap Regge solver
 │   ├── regge_shard_map.py         ← Multi-device shard_map Regge solver (ShardedReggeSolver)
 │   ├── regge_shard_map_profiler.py← Profiled shard_map + jax.profiler traces
 │   ├── regge_shard_map_memory_snapshot.py ← Memory snapshot instrumentation
 │   ├── regge_shard_map_tensorboard.py     ← TensorBoard event writer for trajectories
-│   └── callbacks/
-│       ├── hessian_pl_callback.py             ← Base PL Hessian callback
-│       ├── checkpointed_hessian_pl.py         ← Gradient-checkpointed HVP
-│       ├── distributed_hessian_pl.py          ← DDP-aware Lanczos callback
-│       ├── zero3_hessian_pl.py                ← ZeRO-3/FSDP Hessian + adaptive LR
-│       ├── zero3_compressed_hessian_pl.py     ← ZeRO-3 + 1-bit gradient compression
-│       ├── fp8_zero3_hessian_pl.py            ← FP8 (e4m3fn) Hessian + MGS re-orthog
-│       ├── zeroinfinity_fp8_hessian_pl.py     ← ZeRO-∞ + FP8 combined
-│       ├── zeroinfinity_cpu_fallback_pl.py    ← CPU offload fallback under OOM
-│       └── precision_controller.py             ← Runtime precision state controller
-│   └── tolerance/
-│       ├── dynamic_ledger.py       ← Self-calibrating tolerance updates + audit logs
-│       └── regime_detector.py      ← UV/IR/stiffness/PL regime classification
-├── tests/                         ← Pytest suite covering roadmap claims
-├── configs/params.yaml            ← Physics + solver baseline parameters
-├── configs/tolerance_priors.yaml  ← Dynamic tolerance priors (runtime-adapted)
+│   ├── unified_topology.py        ← Hybrid classical/quantum topology manager
+│   ├── rl_conjecture_loop.py      ← RL conjecture-refinement loop (PPO agent)
+│   ├── proto/                     ← Schema system — validation & serialization
+│   │   ├── constraint_schema.py   ← PhysicsPredicate contract (StatusLevel, AssumptionTag)
+│   │   ├── registry.py            ← Versioned predicate registry + dependency graph
+│   │   ├── return_schemas.py      ← FakeonCertification, UnifiedMeshResults, MeshExecutionScheme
+│   │   ├── schema_enforcer.py     ← @enforce_schema decorator for return validation
+│   │   ├── serializer.py          ← Multi-format serializer (JSON, protobuf, Arrow, pickle)
+│   │   └── orbax_atomic.py        ← Atomic checkpoint I/O (Orbax fallback)
+│   ├── mesh/                      ← Distributed device topology abstraction
+│   │   ├── topology.py            ← DeviceTopology ABC, JAXMeshAdapter, PyTorchMeshAdapter
+│   │   ├── unified_mesh.py        ← UnifiedMesh singleton (auto-detect JAX/PyTorch)
+│   │   └── schemes.py             ← FSDP detection + JAX-FSDP scheme unification
+│   ├── tolerance/                 ← Dynamic tolerance governance
+│   │   ├── dynamic_ledger.py      ← Self-calibrating tolerance updates + audit logs
+│   │   └── regime_detector.py     ← UV/IR/stiffness/PL regime classification
+│   ├── callbacks/                 ← PyTorch-Lightning distributed callbacks
+│   │   ├── hessian_pl_callback.py             ← Base PL Hessian callback
+│   │   ├── checkpointed_hessian_pl.py         ← Gradient-checkpointed HVP
+│   │   ├── distributed_hessian_pl.py          ← DDP-aware Lanczos callback
+│   │   ├── zero3_hessian_pl.py                ← ZeRO-3/FSDP Hessian + adaptive LR
+│   │   ├── zero3_compressed_hessian_pl.py     ← ZeRO-3 + 1-bit gradient compression
+│   │   ├── fp8_zero3_hessian_pl.py            ← FP8 (e4m3fn) Hessian + MGS re-orthog
+│   │   ├── zeroinfinity_fp8_hessian_pl.py     ← ZeRO-∞ + FP8 combined
+│   │   ├── zeroinfinity_cpu_fallback_pl.py    ← CPU offload fallback under OOM
+│   │   └── precision_controller.py             ← Runtime precision state controller
+│   ├── truth/                     ← Universality kernel & epistemic boundary
+│   │   ├── universality_kernel.py ← f₂-space scan for unique fixed points
+│   │   └── epistemic_guard.py     ← Claim-level epistemic boundary enforcement
+│   ├── discovery/                 ← Theory-space exploration
+│   │   └── theory_space.py        ← Symbolic-numeric hybrid theory generation
+│   └── spectral/                  ← Spectral density & robust estimation
+│       └── robust_estimator.py    ← Distributed Hessian spectral estimator
+├── tests/                         ← Pytest suite covering roadmap claims (20 files)
+├── configs/
+│   ├── params.yaml                ← Physics + solver baseline parameters
+│   └── tolerance_priors.yaml      ← Dynamic tolerance priors (runtime-adapted)
 ├── scripts/
 │   ├── run_suite.sh               ← Local / CI entrypoint (ledger-aware, timeout-guarded)
 │   ├── deploy_gce.sh              ← Preemptible GCE launcher + GCS upload
 │   ├── deploy_profiler_gce.sh     ← Profiler GCE variant
+│   ├── deploy_universal.sh        ← Universal multi-cloud deployment orchestrator
+│   ├── diagnose_precision.py      ← Precision diagnostics (detect backend, FP8 effects)
 │   └── launch_tensorboard_proxy.sh← Proxy for remote TensorBoard
 └── docker/Dockerfile              ← Reproducible build image
 ```
@@ -161,10 +188,12 @@ Where root-finding and trajectory tracking stay in Python control flow,
 parallel scaling is constrained and difficult to optimize with accelerator
 compilation alone.
 
-**3. Distributed topology is not unified across frameworks**
-JAX sharding logic and torch.distributed orchestration are managed separately.
-Without a shared topology contract, end-to-end scheduling and debugging remain
-harder than necessary.
+**3. Distributed topology unification is in progress**
+The `UnifiedMesh` singleton (`src/mesh/unified_mesh.py`) and the
+`DeviceTopology` ABC (`src/mesh/topology.py`) provide a shared contract
+for JAX and PyTorch device coordination. However, not all solver entry
+points route through the unified mesh yet — some still construct
+framework-specific meshes directly.
 
 **4. Curvature estimation is lightweight relative to model scale risk**
 Short Lanczos runs are computationally efficient but can under-sample sharp or
@@ -176,10 +205,12 @@ The tolerance ledger exists and is valuable, yet enforcement still depends on
 specific execution paths. Consistent adoption across all solver entry points is
 not complete.
 
-**6. Return contracts are mostly untyped dictionaries**
-The absence of a strict schema/version layer for inter-module outputs is the
-largest structural risk for long-term extensibility, especially for tooling,
-serialization, and cross-language integration.
+**6. Schema enforcement coverage is growing but incomplete**
+The `src/proto/` schema layer (`@enforce_schema`, `PhysicsPredicate`,
+`FakeonCertification`) now provides typed Pydantic contracts for key
+solver outputs. However, some internal helper functions still return
+untyped dicts. Full schema coverage across every inter-module boundary
+remains a work in progress.
 
 
 ## ◈ Module Deep-Dive
@@ -277,6 +308,387 @@ tracks per-tensor quantization error with a 10-step rolling mean.
 
 ---
 
+## ◈ Schemas · Mesh · Ledgers — The Governance Triad
+
+Three subsystems — the **schema layer** (`src/proto/`), the **mesh layer**
+(`src/mesh/`), and the **tolerance ledger** (`src/tolerance/`) — form a
+closed governance loop that every physics computation passes through.
+No solver output escapes without schema validation, no device sharding
+occurs outside the mesh contract, and no tolerance drifts without a
+ledger entry. This section explains each subsystem, then traces how
+they compose into a single verification pipeline.
+
+---
+
+### Schema Layer — `src/proto/`
+
+The schema layer enforces type safety, versioned identity, and
+serialization contracts for every physics assertion the engine produces.
+
+#### Core Contract: `PhysicsPredicate` (`constraint_schema.py`)
+
+Every verifiable physics claim is a `PhysicsPredicate` instance — a
+Pydantic `BaseModel` carrying:
+
+| Field | Type | Purpose |
+|---|---|---|
+| `predicate_id` | `str` | Unique identifier (e.g. `"C_ghost"`) |
+| `version` | `int` | Monotonic version for registry tracking |
+| `statement` | `str` | Human-readable claim text |
+| `mathematical_form` | `str` | LaTeX or SymPy expression |
+| `assumptions` | `List[AssumptionTag]` | Tagged dependency list |
+| `dependencies` | `List[str]` | IDs of upstream predicates |
+| `tolerance` | `float` | Maximum acceptable residual |
+| `residual` | `Optional[float]` | Measured residual after evaluation |
+| `status` | `StatusLevel` | PROVED / VERIFIED / CALCULATED / DEMONSTRATED / PENDING |
+| `boundary_checks` | `Dict` | Results from assumption boundary evaluation |
+| `metadata` | `Dict` | Free-form context (regime, solver, etc.) |
+
+Two Pydantic validators enforce invariants at construction time:
+
+1. **`residual_must_respect_tolerance`** — if a residual is supplied, it
+   must not exceed the declared tolerance.
+2. **`status_requires_residual`** — a predicate cannot claim `VERIFIED`
+   or `CALCULATED` status without a numeric residual.
+
+Methods:
+- `to_json()` → JSON string for audit logs and test fixtures.
+- `to_protobuf()` → protobuf-compatible bytes for cross-language consumers.
+- `check_assumption_boundaries()` → evaluates each `AssumptionTag` against
+  the predicate's metadata and returns a `Dict[AssumptionTag, bool]` map.
+
+Enums that scope the contract:
+
+| Enum | Values | Role |
+|---|---|---|
+| `StatusLevel` | PROVED, VERIFIED, CALCULATED, DEMONSTRATED, PENDING | Epistemic grade |
+| `ConstraintRole` | SELECTOR, CLOSURE, CONSISTENCY | How the predicate is used |
+| `AssumptionTag` | A1\_PERTURBATIVE, A2\_FAKEON\_VALID, A3\_PALATINI\_COMPAT, A4\_SCALE\_INVARIANT, A5\_PORTAL\_DOMINANCE | Physics assumption labels |
+
+#### Registry: `PredicateRegistry` (`registry.py`)
+
+A global in-memory store for versioned predicates with dependency
+indexing. Every predicate registered here is reachable by ID and
+version, and its dependency edges form a directed acyclic graph.
+
+| Method | Signature | Purpose |
+|---|---|---|
+| `register` | `(predicate: PhysicsPredicate) → bool` | Insert with version dedup |
+| `get_latest` | `(predicate_id: str) → Optional[PhysicsPredicate]` | Fetch highest version |
+| `propagate_assumption_failure` | `(failed_tag: AssumptionTag) → List[str]` | Return IDs affected by a broken assumption |
+| `predicate_ids` | `() → List[str]` | List all registered IDs |
+| `dependency_graph` | `(predicate_id: str, depth: int = 3) → Dict[str, List[str]]` | Traverse dependency tree to given depth |
+
+When a physics assumption fails (e.g. perturbativity breakdown),
+`propagate_assumption_failure` identifies every predicate that
+transitively depends on the broken tag — the registry becomes a
+failure-propagation bus.
+
+#### Return Schemas (`return_schemas.py`)
+
+Three Pydantic models constrain solver output shapes:
+
+| Schema | Fields | Used by |
+|---|---|---|
+| `FakeonCertification` | `Re_alpha_at_M2`, `fakeon_virtualized`, `trajectory`, `status`, `t_grid` | `ShardedReggeSolver`, `JAXReggePoleTracker` |
+| `UnifiedMeshResults` | `jax`, `torch` | `UnifiedMesh.co_schedule` |
+| `MeshExecutionScheme` | `mesh_axes`, `fsdp_enabled`, `fsdp_sharding_strategy`, `checkpoint_backend` | `UnifiedMesh.get_execution_scheme` |
+
+#### Enforcement: `@enforce_schema` (`schema_enforcer.py`)
+
+A decorator that wraps any function returning a `dict` and validates the
+payload against a Pydantic schema before returning:
+
+```python
+@enforce_schema(FakeonCertification)
+def verify_fakeon_virtualization(self, trajectory, ...):
+    ...
+    return {"Re_alpha_at_M2": alpha, "status": "VERIFIED", ...}
+```
+
+The decorator constructs a schema instance from the dict, triggering all
+Pydantic validators. If validation passes, the original dict is returned
+(preserving backward compatibility). If validation fails, the Pydantic
+`ValidationError` propagates unmodified. This guarantees that every
+decorated solver output has been structurally certified without requiring
+callers to change their consumption patterns.
+
+#### Serialization: `Serializer` (`serializer.py`)
+
+Multi-format serialization for predicates and arbitrary dicts:
+
+| Method | Signature | Formats |
+|---|---|---|
+| `serialize` | `(obj, format="json", version="1.0.0") → str \| bytes` | json, protobuf, arrow, pickle |
+| `deserialize` | `(data, format="json", target_cls=PhysicsPredicate) → Any` | json, protobuf, arrow, pickle |
+| `compute_checksum` | `(data) → str` | SHA-256 hex digest |
+
+The checksum method underpins audit-trail integrity — every serialized
+predicate or tolerance snapshot can be fingerprinted for deterministic
+replay verification.
+
+#### Atomic Persistence: `OrbaxAtomicStateIO` (`orbax_atomic.py`)
+
+Provides crash-safe checkpoint I/O. Uses Orbax when available; falls
+back to a temp-file-rename pattern otherwise:
+
+- `save(state: dict) → None` — atomic write to disk.
+- `restore() → dict` — read last committed checkpoint.
+
+---
+
+### Mesh Layer — `src/mesh/`
+
+The mesh layer provides a framework-agnostic distributed device
+abstraction so that physics solvers can shard tensors and synchronize
+results without coupling to JAX or PyTorch internals.
+
+#### Abstract Contract: `DeviceTopology` (`topology.py`)
+
+An abstract base class defining the minimal device coordination API:
+
+| Method | Return | Purpose |
+|---|---|---|
+| `get_device_count()` | `int` | Number of available accelerators |
+| `get_device_type()` | `DeviceType` | CPU / GPU / TPU / IPU |
+| `shard_tensor(tensor, axis, partition_spec)` | sharded tensor | Distribute data across mesh axis |
+| `all_reduce(tensor, op="sum")` | tensor | Collective reduction |
+| `barrier()` | `None` | Global synchronization fence |
+| `get_rank()` | `int` | Current process rank |
+| `get_world_size()` | `int` | Total process count |
+
+Two enums scope the topology:
+
+| Enum | Values |
+|---|---|
+| `DeviceType` | CPU, GPU, TPU, IPU |
+| `MeshAxis` | DATA, MODEL, PIPELINE, EXPERT, SPECTRAL |
+
+#### JAX Adapter: `JAXMeshAdapter` (`topology.py`)
+
+Implements `DeviceTopology` using `jax.sharding.Mesh`, `NamedSharding`,
+and `PartitionSpec`. All-reduce delegates to `jax.lax.psum` / `pmean`.
+The reshape spec is derived from the `mesh_axes` constructor parameter,
+which maps logical axis names to physical device ordinals.
+
+```python
+adapter = JAXMeshAdapter(mesh_axes=("data", "model"), devices=jax.devices())
+sharded = adapter.shard_tensor(tensor, MeshAxis.DATA, ("data", None))
+```
+
+#### PyTorch Adapter: `PyTorchMeshAdapter` (`topology.py`)
+
+Implements `DeviceTopology` using `torch.distributed`. Supports `"gloo"`
+and `"nccl"` backends. All-reduce uses `dist.all_reduce`.
+
+```python
+adapter = PyTorchMeshAdapter(backend="nccl")
+adapter.all_reduce(grad_tensor, op="sum")
+```
+
+#### Singleton Coordinator: `UnifiedMesh` (`unified_mesh.py`)
+
+A singleton that bridges JAX and PyTorch mesh topologies behind a single
+interface. On `initialize(backend="auto")`, it auto-detects framework
+availability and constructs the appropriate adapter(s). Framework-
+specific kwargs are filtered via `_JAX_PARAMS` / `_TORCH_PARAMS`
+introspection sets.
+
+| Method | Signature | Purpose |
+|---|---|---|
+| `initialize` | `(backend="auto", **kwargs)` | Detect & construct adapters |
+| `get_topology` | `(framework=None) → DeviceTopology` | Fetch active adapter |
+| `co_schedule` | `(jax_fn, torch_fn, shared_data) → Dict` | Execute both frameworks with barrier synchronization |
+| `shard_across_frameworks` | `(data, axis, jax_spec, torch_spec) → Dict` | Dual-framework tensor sharding |
+| `get_execution_scheme` | `() → dict` | Return `MeshExecutionScheme`-compatible dict |
+
+`co_schedule` is the critical interop method: it runs a JAX function
+and a PyTorch function in sequence, inserting barriers before and after
+each, and returns a `UnifiedMeshResults`-validated dict containing both
+outputs.
+
+#### FSDP Helpers: `schemes.py`
+
+Two utility functions unify FSDP detection across frameworks:
+
+- `detect_fsdp(model) → bool` — checks whether a model is wrapped in
+  `FullyShardedDataParallel`.
+- `unify_jax_fsdp_scheme(mesh_axes, model) → dict` — returns a
+  normalized scheme dict that merges JAX mesh config with FSDP state.
+
+---
+
+### Tolerance Ledger — `src/tolerance/`
+
+The tolerance ledger is a self-calibrating precision manager.
+It tracks per-solver tolerance bounds, adapts them from measured
+residuals via an EWMA feedback rule, classifies the active physics
+regime, and writes an immutable audit trail.
+
+#### Dynamic Tolerance Manager: `DynamicToleranceLedger` (`dynamic_ledger.py`)
+
+Initialized from `configs/tolerance_priors.yaml`, the ledger holds a
+`ToleranceConfig` dataclass per solver key:
+
+| Field | Type | Purpose |
+|---|---|---|
+| `base_tol` | `float` | Starting tolerance before adaptation |
+| `min_tol` | `float` | Hard floor (precision cannot tighten past this) |
+| `max_tol` | `float` | Hard ceiling (precision cannot relax past this) |
+| `adaptation_rate` | `float` | EWMA smoothing constant α |
+| `reference_residual` | `float` | Equilibrium residual for the update rule |
+| `regime` | `str` | Physics regime label |
+| `last_updated` | `str` | ISO timestamp of last mutation |
+
+The adaptation formula is:
+
+```
+tol_{k+1} = clip( tol_k · exp(−α · (r_ewma / r_ref − 1)),  [min_tol, max_tol] )
+```
+
+where `r_ewma` is the exponentially weighted moving average of recent
+residuals. This rule tightens tolerance when residuals are consistently
+below the reference and relaxes it when residuals exceed it — always
+staying within the bounded interval.
+
+| Method | Signature | Purpose |
+|---|---|---|
+| `get_tolerance` | `(key, regime=None) → float` | Fetch current tolerance for a solver key |
+| `update_from_residual` | `(key, residual, solver_id="unknown") → float` | Adapt tolerance from measured residual |
+| `flush_audit` | `() → None` | Persist audit buffer to Parquet (or YAML fallback) |
+| `export_snapshot` | `() → Dict[str, Any]` | Serialize all ledger state |
+
+A `freeze_mode` flag (settable at init or via `--freeze` CLI flag)
+disables all `update_from_residual` mutations, producing deterministic
+replay runs where tolerances remain at their prior values.
+
+The audit trail logs every mutation as a `(timestamp, key, old_tol,
+new_tol, residual, solver_id)` tuple. `flush_audit()` writes the buffer
+to Parquet when `pyarrow` is available, falling back to YAML otherwise.
+
+**Tolerance keys** loaded from `configs/tolerance_priors.yaml`:
+
+| Key | Base | Bounds | Regime |
+|---|---|---|---|
+| `rge_atol` | 1e-10 | [1e-14, 1e-6] | STIFF\_ODE |
+| `hessian_pl` | 2.4e-2 | [1e-3, 5e-2] | HESSIAN\_PL |
+| `bootstrap_unitarity` | 1e-4 | [1e-8, 5e-3] | NONPERT\_UNITARITY |
+| `regge_pole` | 1e-8 | [1e-12, 1e-5] | UV\_FAKEON |
+
+#### Regime Classification: `RegimeDetector` (`regime_detector.py`)
+
+Classifies the active physics regime from solver state and residual
+maps, selecting the tolerance band appropriate for the current
+computation:
+
+| Regime | Condition |
+|---|---|
+| `UV_FAKEON` | Energy scale μ ≥ 0.1 × M₂ and \|f₂ − target\| < 1e-6 |
+| `IR_SM` | μ < 1 kGeV and residuals < 1e-4 |
+| `STIFF_ODE` | Jacobian condition number > 50 or step size < 1e-6 |
+| `HESSIAN_PL` | Hessian μ > 1e-3 |
+| `NONPERT_UNITARITY` | Inelasticity or crossing residuals present |
+| `DEFAULT` | No specific regime detected |
+
+```python
+detector = RegimeDetector(M2_GeV=2.4e23, f2_target=1e-8)
+regime = detector.classify(solver_state={"mu": 1e22, "f2": 1e-8},
+                           residuals={"pole": 3e-9})
+ledger.get_tolerance("regge_pole", regime=regime)
+```
+
+---
+
+### How They Compose: The Governance Loop
+
+When a solver executes, the three subsystems form a closed loop:
+
+```
+ ┌──────────────────────────────────────────────────────────────────┐
+ │                        SOLVER EXECUTION                         │
+ │  (RGE, Bootstrap, Regge, Hessian)                               │
+ │                                                                  │
+ │  1. Mesh Layer allocates devices                                 │
+ │     UnifiedMesh.get_topology() → JAXMeshAdapter                  │
+ │     ShardedReggeSolver distributes t-grid via shard_map          │
+ │                                                                  │
+ │  2. Solver computes result dict                                  │
+ │     {"Re_alpha_at_M2": -0.03, "status": "VERIFIED", ...}        │
+ │                                                                  │
+ │  3. Schema Layer validates output                                │
+ │     @enforce_schema(FakeonCertification) ─────────────────┐      │
+ │     Pydantic validators fire → residual ≤ tolerance       │      │
+ │                                                           │      │
+ │  4. Ledger updates tolerance from residual                │      │
+ │     DynamicToleranceLedger.update_from_residual()  ◄──────┘      │
+ │     RegimeDetector.classify() selects tolerance band             │
+ │     Audit entry appended                                         │
+ │                                                                  │
+ │  5. Registry tracks the predicate                                │
+ │     PredicateRegistry.register(predicate)                        │
+ │     Assumption failure → propagate_assumption_failure()          │
+ │                                                                  │
+ │  6. Serializer persists the result                               │
+ │     Serializer.serialize(result, format="json")                  │
+ │     Serializer.compute_checksum(data) → SHA-256 fingerprint      │
+ └──────────────────────────────────────────────────────────────────┘
+```
+
+**Concrete example — Hessian PL certification on multi-device:**
+
+1. `UnifiedMesh.initialize(backend="auto")` detects JAX, constructs
+   `JAXMeshAdapter` with `mesh_axes=("dev",)`.
+2. `HessianPLCallback.on_train_batch_end` invokes
+   `JAXHessianEstimator.lanczos_eigenvalues(theta, k)`, which calls
+   `hessian_vector_product` inside a `shard_map` over the device mesh.
+3. Eigenvalues are all-reduced via `adapter.all_reduce(eigvals, "sum")`.
+4. The callback computes `μ_global`, `L_global`, checks the PL condition,
+   and returns a result dict.
+5. `@enforce_schema(FakeonCertification)` validates the dict — status,
+   trajectory shape, and residual-within-tolerance are all checked.
+6. `DynamicToleranceLedger.update_from_residual("hessian_pl", residual)`
+   adapts the next run's tolerance. `RegimeDetector.classify()` confirms
+   the `HESSIAN_PL` regime, so tolerance stays in [1e-3, 5e-2].
+7. `PredicateRegistry.register(predicate)` stores the versioned result.
+   If any `AssumptionTag` later fails, `propagate_assumption_failure`
+   marks this predicate's dependents.
+8. `Serializer.compute_checksum(trajectory_bytes)` produces a SHA-256
+   fingerprint that downstream consumers verify before acting on the
+   trajectory.
+
+This loop is the reason every solver in the engine can make certified
+claims: the mesh guarantees correct distribution, the schema guarantees
+structural validity, and the ledger guarantees that numerical precision
+was governed, bounded, and auditable.
+
+---
+
+### Key Functions Reference — Governance Triad
+
+| Function / Method | Location | Purpose |
+|---|---|---|
+| `PhysicsPredicate.to_json()` | `src/proto/constraint_schema.py` | Serialize predicate to JSON |
+| `PhysicsPredicate.check_assumption_boundaries()` | `src/proto/constraint_schema.py` | Evaluate assumptions against metadata |
+| `PredicateRegistry.register(predicate)` | `src/proto/registry.py` | Insert versioned predicate |
+| `PredicateRegistry.propagate_assumption_failure(tag)` | `src/proto/registry.py` | Identify affected predicates |
+| `PredicateRegistry.dependency_graph(id, depth)` | `src/proto/registry.py` | Traverse dependency DAG |
+| `@enforce_schema(schema)` | `src/proto/schema_enforcer.py` | Decorator: validate return dict |
+| `Serializer.serialize(obj, format)` | `src/proto/serializer.py` | Multi-format output |
+| `Serializer.compute_checksum(data)` | `src/proto/serializer.py` | SHA-256 fingerprint |
+| `OrbaxAtomicStateIO.save(state)` | `src/proto/orbax_atomic.py` | Crash-safe checkpoint write |
+| `JAXMeshAdapter.shard_tensor(tensor, axis, spec)` | `src/mesh/topology.py` | JAX device sharding |
+| `PyTorchMeshAdapter.all_reduce(tensor, op)` | `src/mesh/topology.py` | PyTorch collective reduce |
+| `UnifiedMesh.initialize(backend, **kwargs)` | `src/mesh/unified_mesh.py` | Auto-detect & construct adapters |
+| `UnifiedMesh.co_schedule(jax_fn, torch_fn, data)` | `src/mesh/unified_mesh.py` | Cross-framework execution |
+| `UnifiedMesh.get_execution_scheme()` | `src/mesh/unified_mesh.py` | Return MeshExecutionScheme dict |
+| `detect_fsdp(model)` | `src/mesh/schemes.py` | Check for FSDP wrapper |
+| `DynamicToleranceLedger.get_tolerance(key, regime)` | `src/tolerance/dynamic_ledger.py` | Fetch current tolerance |
+| `DynamicToleranceLedger.update_from_residual(key, r)` | `src/tolerance/dynamic_ledger.py` | Adapt tolerance from residual |
+| `DynamicToleranceLedger.flush_audit()` | `src/tolerance/dynamic_ledger.py` | Write audit trail to Parquet/YAML |
+| `RegimeDetector.classify(state, residuals)` | `src/tolerance/regime_detector.py` | Select physics regime |
+
+---
+
 ## ◈ Quickstart
 
 ### Local
@@ -366,6 +778,9 @@ trainer = Trainer(
 | `test_gce_fp8_integration.py` | GCE FP8 path | Deploy + profiler + metrics |
 | `test_robust_spectral.py` | Spectral robustness | Stable estimator under perturbations |
 | `test_tolerance_ledger.py` | Dynamic tolerance ledger | Bounded adaptation + auditability |
+| `test_pr23_review_fixes.py` | Schema + mesh fixes | Registry IDs, kwargs filtering, IR consistency, JAX reshape |
+| `test_hybrid_discovery_architecture.py` | Theory-space discovery | Hybrid symbolic-numeric exploration loop |
+| `test_w_fixes_integration.py` | Integration fixes | Cross-module integration correctness |
 
 <!-- VISUAL: Test coverage sunburst chart — inner ring = test category (symbolic/numerical/distributed/deployment), outer ring = individual test files. Color-coded by pass/pending status. -->
 
@@ -436,12 +851,19 @@ The FP8 quantization error path (`avg_q_err > 1e-3 ∧ μ < pl_tol → BF16 fall
 should become a **Helm value** (`hessian.fp8.errorThreshold: 1e-3`) that the
 sidecar reads from a ConfigMap and acts on autonomously.
 
-### Serialization — The Zero-Schema Problem
+### Serialization — Schema Contracts and the Proto3 Path
 
-Every inter-module return value is currently a Python `dict`:
+The `src/proto/` layer has introduced Pydantic-validated return schemas
+(`FakeonCertification`, `UnifiedMeshResults`, `MeshExecutionScheme`) and
+the `@enforce_schema` decorator, which now guards key solver outputs.
+Inter-module return values are still Python `dict` objects at the
+transport layer, but they are structurally validated before leaving the
+decorated function:
 
 ```python
-{"status": "VERIFIED", "Re_alpha_at_M2": -0.03, "trajectory": [...], ...}
+@enforce_schema(FakeonCertification)
+def verify_fakeon_virtualization(self, ...):
+    return {"status": "VERIFIED", "Re_alpha_at_M2": -0.03, "trajectory": [...], ...}
 ```
 
 In the rewrite, **every one of these dicts has an exact proto3 equivalent**.
