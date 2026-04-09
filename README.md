@@ -62,7 +62,7 @@ QFT-Engine/
 │       ├── fp8_zero3_hessian_pl.py            ← FP8 (e4m3fn) Hessian + MGS re-orthog
 │       ├── zeroinfinity_fp8_hessian_pl.py     ← ZeRO-∞ + FP8 combined
 │       └── zeroinfinity_cpu_fallback_pl.py    ← CPU offload fallback under OOM
-├── tests/                         ← 11 pytest modules, one per roadmap claim
+├── tests/                         ← Pytest suite covering roadmap claims
 ├── configs/params.yaml            ← Central tolerance ledger
 ├── scripts/
 │   ├── run_suite.sh               ← Local / CI entrypoint (timeout-guarded)
