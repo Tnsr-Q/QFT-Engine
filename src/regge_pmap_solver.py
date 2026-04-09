@@ -3,6 +3,9 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax, pmap
 
+from src.proto.return_schemas import FakeonCertification
+from src.proto.schema_enforcer import enforce_schema
+
 jax.config.update("jax_enable_x64", True)
 
 
@@ -88,6 +91,7 @@ class PMappedReggeSolver:
         alpha_sharded = pmap(self._scan_shard)(s_sharded, l0_sharded, delta_sharded)
         return alpha_sharded.reshape(-1)
 
+    @enforce_schema(FakeonCertification)
     def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
         t_target = self.M2**2
         idx = jnp.argmin(jnp.abs(self.t_grid - t_target))

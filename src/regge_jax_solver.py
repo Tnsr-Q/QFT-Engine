@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Dict
 
+from src.proto.return_schemas import FakeonCertification
+from src.proto.schema_enforcer import enforce_schema
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -77,6 +80,7 @@ class JAXReggePoleTracker:
         vmap_find = vmap(self._find_pole_single, in_axes=(0, 0, None))
         return vmap_find(s_cross, delta_at_t, l0)
 
+    @enforce_schema(FakeonCertification)
     def verify_fakeon_virtualization(
         self,
         alpha_traj: jnp.ndarray,
