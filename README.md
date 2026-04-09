@@ -288,6 +288,7 @@ tracks per-tensor quantization error with a 10-step rolling mean.
 ```bash
 python -m pip install -U pip
 pip install -r requirements.txt
+pip install sympy
 bash scripts/run_suite.sh
 ```
 
