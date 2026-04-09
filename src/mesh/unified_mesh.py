@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from typing import Any, Callable, Dict, Optional
 
@@ -8,6 +9,9 @@ import numpy as np
 from .topology import DeviceTopology, JAXMeshAdapter, MeshAxis, PyTorchMeshAdapter
 
 log = logging.getLogger("QUFT_UnifiedMesh")
+
+_JAX_PARAMS = set(inspect.signature(JAXMeshAdapter.__init__).parameters) - {"self"}
+_TORCH_PARAMS = set(inspect.signature(PyTorchMeshAdapter.__init__).parameters) - {"self"}
 
 
 class UnifiedMesh:
@@ -29,9 +33,12 @@ class UnifiedMesh:
         self._active_backend: Optional[str] = None
 
     def initialize(self, backend: str = "auto", **kwargs):
+        jax_kwargs = {k: v for k, v in kwargs.items() if k in _JAX_PARAMS}
+        torch_kwargs = {k: v for k, v in kwargs.items() if k in _TORCH_PARAMS}
+
         if backend in {"auto", "jax"}:
             try:
-                self._jax_mesh = JAXMeshAdapter(**kwargs)
+                self._jax_mesh = JAXMeshAdapter(**jax_kwargs)
                 log.info("Initialized JAX mesh: %s devices", self._jax_mesh.get_device_count())
                 self._active_backend = self._active_backend or "jax"
             except Exception as exc:  # best-effort initialization
@@ -39,7 +46,7 @@ class UnifiedMesh:
 
         if backend in {"auto", "pytorch"}:
             try:
-                self._torch_mesh = PyTorchMeshAdapter(**kwargs)
+                self._torch_mesh = PyTorchMeshAdapter(**torch_kwargs)
                 log.info("Initialized PyTorch mesh: %s ranks", self._torch_mesh.get_world_size())
                 self._active_backend = self._active_backend or "pytorch"
             except Exception as exc:  # best-effort initialization

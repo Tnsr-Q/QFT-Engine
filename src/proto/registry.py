@@ -49,6 +49,10 @@ class PredicateRegistry:
                 log.warning("Assumption %s failed; %s should be downgraded to PENDING", failed_tag.value, predicate_id)
         return affected_ids
 
+    def predicate_ids(self) -> List[str]:
+        """Return a list of all registered predicate IDs."""
+        return list(self._predicates.keys())
+
     def dependency_graph(self, predicate_id: str, depth: int = 3) -> Dict[str, List[str]]:
         graph: Dict[str, List[str]] = {}
         visited: Set[str] = set()

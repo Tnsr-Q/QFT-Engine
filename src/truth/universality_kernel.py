@@ -22,11 +22,12 @@ class UniversalityKernel:
 
         for f2_val in f2_range:
             rge_result = self.rge_solver.solve_f2(float(f2_val))
-            _ = self._check_ir_consistency(rge_result)
+            if not self._check_ir_consistency(rge_result):
+                continue
             bootstrap_result = self.bootstrap_solver.solve_at_scale(float(f2_val))
 
             predicate_scores: Dict[str, float] = {}
-            for pred_id in self.registry._predicates:
+            for pred_id in self.registry.predicate_ids():
                 predicate = self.registry.get_latest(pred_id)
                 if predicate is None:
                     continue
