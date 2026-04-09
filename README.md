@@ -13,7 +13,7 @@
 
 QFT-Engine is a precision verification harness for theoretical claims in
 **Scale-Invariant Quadratic Gravity (SIQG)** with the **fakeon prescription**
-(Anisele). It is not a simulation framework — it is an **assertion engine**.
+(Anselmi). It is not a simulation framework — it is an **assertion engine**.
 Every module is a mathematical predicate: pass or fail, with quantified residuals.
 
 The engine spans:
