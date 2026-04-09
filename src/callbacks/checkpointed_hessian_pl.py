@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import numpy as np
@@ -5,6 +6,8 @@ import pytorch_lightning as pl
 import torch
 import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
+
+logger = logging.getLogger(__name__)
 
 from src.proto.orbax_atomic import OrbaxAtomicStateIO
 
@@ -127,7 +130,13 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
     def save_state(self) -> None:
         if self.state_io is None:
             return
-        self.state_io.save(self._export_state())
+        try:
+            self.state_io.save(self._export_state())
+        except Exception as exc:
+            logger.warning(
+                "Failed to save Hessian checkpoint state; continuing without persistence.",
+                exc_info=exc,
+            )
 
     def on_train_batch_end(
         self,
