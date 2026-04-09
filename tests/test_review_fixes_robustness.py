@@ -32,9 +32,6 @@ def test_hvp_sanitizes_nan_without_clipping():
 
     # Result must be finite (NaNs sanitised)
     assert np.isfinite(np.asarray(hv)).all()
-    # Finite values must NOT be clipped to [-0.05, 0.05]; for a well-defined
-    # problem the magnitudes can exceed 0.05.
-    assert float(jnp.max(jnp.abs(hv))) > 0.05 or True  # at least no assertion error
 
 
 def test_hvp_preserves_large_finite_values():

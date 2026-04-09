@@ -135,7 +135,7 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
         except Exception as exc:
             logger.warning(
                 "Failed to save Hessian checkpoint state; continuing without persistence.",
-                exc_info=exc,
+                exc_info=True,
             )
 
     def on_train_batch_end(
