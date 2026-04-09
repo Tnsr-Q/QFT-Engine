@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class OrbaxAtomicStateIO:
@@ -44,10 +47,34 @@ class OrbaxAtomicStateIO:
             if isinstance(restored, dict):
                 return restored
         except Exception:
-            pass
+            logger.debug(
+                "Orbax state restore failed; falling back to JSON file restore",
+                exc_info=True,
+            )
 
-        with open(self.path, encoding="utf-8") as f:
-            payload = json.load(f)
+        try:
+            with open(self.path, encoding="utf-8") as f:
+                payload = json.load(f)
+        except FileNotFoundError:
+            logger.warning(
+                "State file '%s' not found; returning empty state", self.path
+            )
+            return {}
+        except json.JSONDecodeError:
+            logger.warning(
+                "State file '%s' is not valid JSON; returning empty state",
+                self.path,
+                exc_info=True,
+            )
+            return {}
+        except ValueError:
+            logger.warning(
+                "State file '%s' could not be decoded; returning empty state",
+                self.path,
+                exc_info=True,
+            )
+            return {}
+
         if not isinstance(payload, dict):
             raise ValueError("State payload must be a dict")
         return payload
