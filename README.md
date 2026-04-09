@@ -25,6 +25,7 @@ The engine spans:
 | JIT / Auto-diff | `jax` (x64, jvp/vjp, jit, vmap, pmap, shard_map) |
 | Distributed Training | `pytorch-lightning` + ZeRO-3 / FSDP / DeepSpeed |
 | Precision modes | FP64 → FP32 → FP8 (e4m3fn) with error feedback |
+| Tolerance governance | Dynamic ledger (`src/tolerance/`) + regime detector |
 | Observability | TensorBoard + `jax.profiler` + GCS upload |
 | Compute backends | CPU · GPU · Multi-device · GCE preemptible |
 
@@ -61,11 +62,16 @@ QFT-Engine/
 │       ├── zero3_compressed_hessian_pl.py     ← ZeRO-3 + 1-bit gradient compression
 │       ├── fp8_zero3_hessian_pl.py            ← FP8 (e4m3fn) Hessian + MGS re-orthog
 │       ├── zeroinfinity_fp8_hessian_pl.py     ← ZeRO-∞ + FP8 combined
-│       └── zeroinfinity_cpu_fallback_pl.py    ← CPU offload fallback under OOM
+│       ├── zeroinfinity_cpu_fallback_pl.py    ← CPU offload fallback under OOM
+│       └── precision_controller.py             ← Runtime precision state controller
+│   └── tolerance/
+│       ├── dynamic_ledger.py       ← Self-calibrating tolerance updates + audit logs
+│       └── regime_detector.py      ← UV/IR/stiffness/PL regime classification
 ├── tests/                         ← Pytest suite covering roadmap claims
-├── configs/params.yaml            ← Central tolerance ledger
+├── configs/params.yaml            ← Physics + solver baseline parameters
+├── configs/tolerance_priors.yaml  ← Dynamic tolerance priors (runtime-adapted)
 ├── scripts/
-│   ├── run_suite.sh               ← Local / CI entrypoint (timeout-guarded)
+│   ├── run_suite.sh               ← Local / CI entrypoint (ledger-aware, timeout-guarded)
 │   ├── deploy_gce.sh              ← Preemptible GCE launcher + GCS upload
 │   ├── deploy_profiler_gce.sh     ← Profiler GCE variant
 │   └── launch_tensorboard_proxy.sh← Proxy for remote TensorBoard
@@ -77,7 +83,7 @@ QFT-Engine/
 ## ◈ Core Physics Parameters
 
 ```yaml
-# configs/params.yaml — the single source of truth
+# configs/params.yaml — baseline physical + numerical constants
 roadmap:
   M2_GeV:          2.4e23   # Fakeon mass threshold (GeV) — UV cutoff
   f2_target:       1.0e-8   # Gravity coupling target at M2
@@ -88,6 +94,18 @@ assumptions:
   lyapunov_decay_min: 1.5e-2   # Lyapunov V_opt decay floor γ
   thermal_T_reh_max:  1.0e15   # Reheating temperature ceiling (GeV)
 ```
+
+```yaml
+# configs/tolerance_priors.yaml — adaptive ledger priors
+rge_atol:
+  base_tol: 1.0e-10
+  min_tol: 1.0e-14
+  max_tol: 1.0e-6
+  adaptation_rate: 0.15
+```
+
+`scripts/run_suite.sh` executes pytest with `--tolerance-ledger=configs/tolerance_priors.yaml`
+and supports `--freeze` (freeze updates) plus `--audit-verify` (print deterministic checksum).
 
 <!-- VISUAL: Physics constants card grid — 7 parameter tiles, each with symbol, value, physical meaning, and which test it gates. Dark background, monochrome with teal accent on value. -->
 
@@ -127,8 +145,9 @@ fallback warning is emitted. The ZeRO-∞ / CPU-offload fallback chain
 handles OOM gracefully without silent precision silencing.
 
 **5. Mathematically closed test suite**  
-Each of the 11 test files maps to a named roadmap claim. Tests are bounded
-by tolerances in `params.yaml` — meaning the CI verdicts are parameter-traceable.
+Each of the 15 test files maps to a named roadmap claim. Tests are bounded
+by tolerances in `params.yaml` and adaptive priors in `tolerance_priors.yaml`
+— meaning the CI verdicts are parameter-traceable.
 Physics predicates (Froissart bound, BRST nilpotency, Källén-Lehmann
 normalization, crossing symmetry residuals) are all binary-certified.
 
@@ -164,11 +183,11 @@ this underestimates the spectral radius. The adaptive LR formula `η = 1/(L+μ)`
 will be optimistic when L is underestimated, risking divergence in late
 training.
 
-**4. Static tolerance ledger with no runtime self-calibration**  
-`params.yaml` values are fixed at commit time. There is no feedback path
-where solver residuals can tighten or relax tolerances across runs. If a
-new physics regime requires tighter `atol=1e-12` for a specific test, the
-entire suite re-runs at that tolerance.
+**4. Adaptive tolerance path exists but is not yet universal**  
+The dynamic ledger (`src/tolerance/dynamic_ledger.py`) can self-calibrate and
+emit audits, but adaptation is currently activated via the pytest plugin/CLI
+path (e.g., `scripts/run_suite.sh`) rather than being consumed directly by
+every solver module. Some modules still use static bounds from `params.yaml`.
 
 **5. FP8 path is best-effort with version dependency**  
 `torch.float8_e4m3fn` is availability-checked via `getattr(torch, ...)`.
@@ -259,7 +278,8 @@ of the pole condition — fully XLA-compilable, zero Python loop overhead.
 
 ### Callback Layer — Distributed Hessian Telemetry
 
-All eight callback variants share the same core pattern:
+Nine callback modules are included (`hessian_*`, `zero3_*`, `zeroinfinity_*`, and
+`precision_controller.py`). The Hessian-focused variants share this core pattern:
 
 ```
 on_train_batch_end (every monitor_every steps, after warmup)
@@ -290,6 +310,8 @@ python -m pip install -U pip
 pip install -r requirements.txt
 pip install sympy
 bash scripts/run_suite.sh
+# Optional: freeze adaptive tolerances for deterministic replay
+bash scripts/run_suite.sh --freeze --audit-verify
 ```
 
 ### Docker
@@ -366,6 +388,8 @@ trainer = Trainer(
 | `test_memory_cpu_fallback.py` | OOM resilience | CPU fallback activates |
 | `test_profiler_compression_integration.py` | Profiler + FP8 | Trace & quant error logged |
 | `test_gce_fp8_integration.py` | GCE FP8 path | Deploy + profiler + metrics |
+| `test_robust_spectral.py` | Spectral robustness | Stable estimator under perturbations |
+| `test_tolerance_ledger.py` | Dynamic tolerance ledger | Bounded adaptation + auditability |
 
 <!-- VISUAL: Test coverage sunburst chart — inner ring = test category (symbolic/numerical/distributed/deployment), outer ring = individual test files. Color-coded by pass/pending status. -->
 
