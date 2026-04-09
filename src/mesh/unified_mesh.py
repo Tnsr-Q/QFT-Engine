@@ -53,7 +53,6 @@ class UnifiedMesh:
         if backend in {"auto", "pytorch"}:
             try:
                 self._torch_mesh = PyTorchMeshAdapter(**torch_kwargs)
-                self._execution_scheme = self._execution_scheme.model_copy(update={"fsdp_enabled": True})
                 log.info("Initialized PyTorch mesh: %s ranks", self._torch_mesh.get_world_size())
                 self._active_backend = self._active_backend or "pytorch"
             except Exception as exc:  # best-effort initialization

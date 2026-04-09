@@ -9,6 +9,8 @@ import torch
 import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
 
+logger = logging.getLogger(__name__)
+
 from src.proto.orbax_atomic import OrbaxAtomicStateIO
 
 logger = logging.getLogger(__name__)
@@ -132,10 +134,9 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
     def save_state(self) -> None:
         if self.state_io is None:
             return
-
         try:
             self.state_io.save(self._export_state())
-        except Exception:  # best-effort diagnostic persistence
+        except Exception as exc:
             logger.warning(
                 "Failed to save Hessian checkpoint state; continuing without persistence.",
                 exc_info=True,

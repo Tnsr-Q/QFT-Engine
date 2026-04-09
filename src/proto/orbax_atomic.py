@@ -58,11 +58,20 @@ class OrbaxAtomicStateIO:
             with open(self.path, encoding="utf-8") as f:
                 payload = json.load(f)
         except FileNotFoundError:
-            logger.warning("State file '%s' not found; returning empty state", self.path)
+            logger.warning(
+                "State file '%s' not found; returning empty state", self.path
+            )
             return {}
         except json.JSONDecodeError:
             logger.warning(
                 "State file '%s' is not valid JSON; returning empty state",
+                self.path,
+                exc_info=True,
+            )
+            return {}
+        except ValueError:
+            logger.warning(
+                "State file '%s' could not be decoded; returning empty state",
                 self.path,
                 exc_info=True,
             )
