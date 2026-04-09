@@ -42,9 +42,7 @@ class JAXHessianEstimator:
         _, jv = jvp(self.constraint_fn, (theta,), (v,))
         _, vjp_fn = jax.vjp(self.constraint_fn, theta)
         jt_w_jv = vjp_fn(self.W * jv)[0]
-        hv = jt_w_jv + self.Lambda * v
-        hv = jnp.nan_to_num(hv, nan=0.0, posinf=0.05, neginf=-0.05)
-        return jnp.clip(hv, -0.05, 0.05)
+        return jt_w_jv + self.Lambda * v
 
     def lanczos_eigenvalues(
         self,
