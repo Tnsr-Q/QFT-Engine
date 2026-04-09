@@ -1,10 +1,10 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit
-from scipy.optimize import root_scalar
 from typing import Dict, Tuple
 
 from src.bootstrap_solver import DiscretizedBootstrapSolver
+from src.regge_jax_solver import JAXReggePoleTracker
 
 
 class ReggeExtendedBootstrap(DiscretizedBootstrapSolver):
@@ -45,28 +45,19 @@ class ReggeExtendedBootstrap(DiscretizedBootstrapSolver):
         S_l_solved: jnp.ndarray,
         delta_solved: jnp.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Track a coarse Regge trajectory α(t) over the configured t-grid."""
+        """Track a coarse Regge trajectory α(t) with a JAX-native Newton solver."""
         del S_l_solved  # interface-compatible input; phase information is read from delta_solved.
 
-        alpha_traj = []
-        delta_np = np.asarray(delta_solved)
+        tracker = JAXReggePoleTracker(alpha=self.alpha, m2=self.m2)
+        t_grid_jax = jnp.asarray(self.t_grid)
+        s_grid_jax = jnp.asarray(self.s_grid)
+        delta_jax = jnp.asarray(delta_solved)
 
-        for t_val in self.t_grid:
-            s_cross = max(float(t_val), 4.0 * self.m2)
-            s_idx = int(np.argmin(np.abs(np.asarray(self.s_grid) - s_cross)))
-            delta_slice = delta_np[:, s_idx]
+        s_cross = jnp.maximum(t_grid_jax, tracker.threshold)
+        s_idx = jnp.argmin(jnp.abs(s_grid_jax[None, :] - s_cross[:, None]), axis=1)
+        delta_at_t = jnp.mean(delta_jax[:, s_idx], axis=0)
 
-            def pole_condition(l_re: float) -> float:
-                eta_c = np.exp(-self.alpha * np.maximum(s_cross - 0.04, 0.0) ** (l_re + 0.01j + 1.0))
-                S_c = eta_c * np.exp(2j * np.mean(delta_slice))
-                return float(np.imag(1.0 / (1.0 - S_c)))
-
-            try:
-                res = root_scalar(pole_condition, bracket=[-0.4, 1.8], method="brentq", xtol=1e-6)
-                alpha_traj.append(complex(res.root, 0.0))
-            except ValueError:
-                alpha_traj.append(complex(-0.25, 0.0))
-
+        alpha_traj = tracker.scan_trajectory(t_grid_jax, delta_at_t)
         return np.asarray(alpha_traj), self.t_grid
 
     def verify_fakeon_regge_condition(self, alpha_traj: np.ndarray, t_grid: np.ndarray) -> Dict[str, object]:
