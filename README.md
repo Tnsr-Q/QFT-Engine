@@ -2,7 +2,7 @@
 
 # ⚛ QFT-Engine — QÜFT Verification Suite
 
-> **Computational verification scaffold for Scale-Invariant Quadratic Gravity.**  
+> **Computational verification scaffold for Scale-Invariant Quadratic Gravity.**
 > Flow stability · Spectral consistency · Bootstrap non-perturbative constraints · Distributed Hessian telemetry.
 
 <!-- VISUAL: 3-column badge row — CI status | Docker build | Python version -->
@@ -115,103 +115,79 @@ and supports `--freeze` (freeze updates) plus `--audit-verify` (print determinis
 
 ### Strengths
 
-**1. JAX end-to-end autodiff on physical kernels**  
-Every Regge pole condition `f(l_re, s, δ)` is JAX-traceable. Newton-Raphson
-uses exact `jvp` tangent propagation — no finite-difference noise. The
-`lax.while_loop` construct keeps the iteration XLA-compilable and loop-unrolled
-at the hardware level. FP64 is explicitly enabled (`jax_enable_x64=True`)
-everywhere, which is non-default in JAX and matters for RGE integration at
-14-decade energy scales (173 GeV → 2.4×10²³ GeV).
+**1. Strong numerical core for physics-grade stability**
+The stack is explicitly designed around high-precision numerical behavior:
+FP64-enabled JAX kernels for sensitive derivatives, robust SciPy integration
+for long-scale RG running, and deterministic tolerance governance that keeps
+residuals explainable instead of “magic-number tuned.”
 
-**2. Three parallel Regge backends at different granularity**  
-`VectorizedReggeSolver` (vmap), `PMappedReggeSolver` (pmap), and
-`ShardedReggeSolver` (shard_map) give a clear scaling ladder. `shard_map`
-is the most recent JAX primitive with explicit mesh topology control and
-`check_vma`/`check_rep` fallback guards for API compatibility across JAX
-versions.
+**2. Multi-backend execution strategy is practical, not ornamental**
+Having vmap, pmap, and shard_map implementations provides a credible path from
+single-device debugging to multi-device throughput. This reduces migration
+friction when moving from local validation to cluster-scale experiments.
 
-**3. Hessian spectrum monitoring as a first-class training primitive**  
-The callback layer implements **distributed Lanczos** (k steps, all-reduce
-aggregated eigenvalues) directly in the training loop. The PL-condition
-`0.5‖∇L‖² ≥ μ(L − L*)` is verified online, and `η_opt = 1/(L + μ)` is
-broadcast to all optimizer param groups every `monitor_every` steps. This
-is a genuine adaptive second-order feedback loop, not a post-hoc analysis.
+**3. Built-in spectral/Hessian diagnostics improve training trust**
+The callback layer does more than logging — it estimates curvature and checks
+PL-style conditions online, then updates optimization behavior from measured
+signals. This is a meaningful reliability feature for stiff, non-convex
+objectives.
 
-**4. Precision cascade with error telemetry**  
-FP8 (e4m3fn / e5m2) is attempted first; per-tensor dynamic scales are
-stored in `fp8_scales` dict; quantization error is measured against FP32
-ground truth every HVP call; if `avg_q_err > 1e-3 ∧ μ < pl_tol` a BF16
-fallback warning is emitted. The ZeRO-∞ / CPU-offload fallback chain
-handles OOM gracefully without silent precision silencing.
+**4. Resilience-first precision and memory fallbacks**
+The precision cascade and ZeRO/CPU-offload style fallbacks prioritize job
+continuity under hardware pressure (OOM, unsupported low-precision modes),
+which is critical for long-running verification pipelines.
 
-**5. Mathematically closed test suite**  
-Each of the 15 test files maps to a named roadmap claim. Tests are bounded
-by tolerances in `params.yaml` and adaptive priors in `tolerance_priors.yaml`
-— meaning the CI verdicts are parameter-traceable.
-Physics predicates (Froissart bound, BRST nilpotency, Källén-Lehmann
-normalization, crossing symmetry residuals) are all binary-certified.
+**5. Clear physics-to-test traceability**
+The repository structure maps physical claims to concrete checks and tolerances.
+That claim → module → test pattern is one of the strongest maintainability
+characteristics in the project.
 
-**6. Deployment portability**  
-The same codebase runs in Docker, local CPU, multi-GPU via DDP/FSDP, and
-preemptible GCE with automatic JUnit XML upload to GCS. TensorBoard proxy
-script gives remote observability with zero firewall changes.
-
-<!-- VISUAL: Radar chart — 6 axes: Autodiff precision / Parallelism depth / Memory efficiency / Observability / Portability / Physics coverage. Filled polygon in teal against dark grid. -->
+**6. Deployment and observability are already production-aware**
+Dockerization, remote profiling hooks, TensorBoard support, and cloud scripts
+mean operational concerns are considered early, not retrofitted after research
+code stabilizes.
 
 ---
 
 ### Weaknesses
 
-**1. Python GIL ceiling on the outer solver loop**  
-`regge_bootstrap.py::track_regge_poles` runs a Python `for` loop over
-`t_grid` (40 points), calling `root_scalar` per point. This is not
-JAX-traced and cannot be XLA-compiled. Under multi-worker scenarios the
-GIL serializes this entirely. The `VectorizedReggeSolver` solves this for
-the shard_map path, but `ReggeExtendedBootstrap` still carries the Python loop.
+**1. Mixed execution model increases complexity at boundaries**
+The project combines SciPy, JAX, and PyTorch Lightning effectively, but this
+also creates orchestration seams (device placement, distributed runtime
+assumptions, and data handoff conventions) that are easy to regress.
 
-**2. No shared mesh/sharding contract between solver and callback layers**  
-The Regge solvers define their own `Mesh(np.array(devices), ("dev",))` and
-the PyTorch Lightning callbacks operate in a separate distributed context
-(`torch.distributed`). There is no unified device-topology abstraction —
-JAX mesh and PyTorch process group are independently managed, preventing
-co-scheduling.
+**2. Some hot paths remain Python-loop bound**
+Where root-finding and trajectory tracking stay in Python control flow,
+parallel scaling is constrained and difficult to optimize with accelerator
+compilation alone.
 
-**3. Lanczos with k=3-4 is numerically thin for large models**  
-The distributed Lanczos in the callback layer uses k=3 (ZeRO-3) or k=4
-(FP8) iterations. For ill-conditioned Hessians in large parameter spaces
-this underestimates the spectral radius. The adaptive LR formula `η = 1/(L+μ)`
-will be optimistic when L is underestimated, risking divergence in late
-training.
+**3. Distributed topology is not unified across frameworks**
+JAX sharding logic and torch.distributed orchestration are managed separately.
+Without a shared topology contract, end-to-end scheduling and debugging remain
+harder than necessary.
 
-**4. Adaptive tolerance path exists but is not yet universal**  
-The dynamic ledger (`src/tolerance/dynamic_ledger.py`) can self-calibrate and
-emit audits, but adaptation is currently activated via the pytest plugin/CLI
-path (e.g., `scripts/run_suite.sh`) rather than being consumed directly by
-every solver module. Some modules still use static bounds from `params.yaml`.
+**4. Curvature estimation is lightweight relative to model scale risk**
+Short Lanczos runs are computationally efficient but can under-sample sharp or
+ill-conditioned spectra, making adaptive step-size decisions overconfident in
+late training.
 
-**5. FP8 path is best-effort with version dependency**  
-`torch.float8_e4m3fn` is availability-checked via `getattr(torch, ...)`.
-If PyTorch < 2.1 or the build lacks FP8 hardware support, the path silently
-falls back to FP32 — which is correct behavior, but the `quantization_error`
-telemetry then records zeros, giving a false signal of zero quantization
-loss.
+**5. Adaptive tolerances are present but not fully pervasive**
+The tolerance ledger exists and is valuable, yet enforcement still depends on
+specific execution paths. Consistent adoption across all solver entry points is
+not complete.
 
-**6. No proto/schema layer — all inter-module contracts are dict literals**  
-Every solver returns a Python `dict` with string keys (`"status"`,
-`"Re_alpha_at_M2"`, `"fakeon_virtualized"`, etc.). There is no typed schema,
-no serialization contract, no versioning. This is the largest structural
-debt against a cross-language refactor.
+**6. Return contracts are mostly untyped dictionaries**
+The absence of a strict schema/version layer for inter-module outputs is the
+largest structural risk for long-term extensibility, especially for tooling,
+serialization, and cross-language integration.
 
-<!-- VISUAL: Risk matrix — 2D grid: Impact (low→high) vs Likelihood (low→high). Six labeled nodes for weaknesses above, sized by fix complexity. Dark background, amber risk nodes. -->
-
----
 
 ## ◈ Module Deep-Dive
 
 ### `SIQGRGESolver` — 2-Loop RGE Integration
 
-Integrates a 9-component coupling vector  
-`g = [λ_H, λ_S, λ_HS, y_t, g₁, g₂, g₃, f₂, ξ_H]`  
+Integrates a 9-component coupling vector
+`g = [λ_H, λ_S, λ_HS, y_t, g₁, g₂, g₃, f₂, ξ_H]`
 from the top-mass scale (173.1 GeV) to the fakeon threshold M₂ = 2.4×10²³ GeV
 using `scipy.solve_ivp` RK45.
 
@@ -397,7 +373,7 @@ trainer = Trainer(
 
 ## ◈ Dev Message
 
-> **To the engineer about to tear this stack down and rebuild it in Rust/Go/proto/k8s:**  
+> **To the engineer about to tear this stack down and rebuild it in Rust/Go/proto/k8s:**
 > Read this before you touch the Python. It is the spec.
 
 ---
