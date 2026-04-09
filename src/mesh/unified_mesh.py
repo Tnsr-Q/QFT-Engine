@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict, Optional
 import numpy as np
 
 from .topology import DeviceTopology, JAXMeshAdapter, MeshAxis, PyTorchMeshAdapter
+from src.proto.return_schemas import MeshExecutionScheme, UnifiedMeshResults
+from src.proto.schema_enforcer import enforce_schema
 
 log = logging.getLogger("QUFT_UnifiedMesh")
 
@@ -31,10 +33,14 @@ class UnifiedMesh:
         self._jax_mesh: Optional[JAXMeshAdapter] = None
         self._torch_mesh: Optional[PyTorchMeshAdapter] = None
         self._active_backend: Optional[str] = None
+        self._execution_scheme = MeshExecutionScheme()
 
     def initialize(self, backend: str = "auto", **kwargs):
         jax_kwargs = {k: v for k, v in kwargs.items() if k in _JAX_PARAMS}
         torch_kwargs = {k: v for k, v in kwargs.items() if k in _TORCH_PARAMS}
+
+        if "mesh_axes" in kwargs:
+            self._execution_scheme = self._execution_scheme.model_copy(update={"mesh_axes": tuple(kwargs["mesh_axes"])})
 
         if backend in {"auto", "jax"}:
             try:
@@ -67,6 +73,7 @@ class UnifiedMesh:
             return self._torch_mesh
         raise ValueError(f"No topology available for framework: {fw}")
 
+    @enforce_schema(UnifiedMeshResults)
     def co_schedule(
         self,
         jax_fn: Optional[Callable[[Dict[str, Any]], Any]],
@@ -105,6 +112,7 @@ class UnifiedMesh:
 
         return results
 
+    @enforce_schema(UnifiedMeshResults)
     def shard_across_frameworks(
         self, data: Any, axis: MeshAxis, jax_spec: tuple, torch_spec: tuple
     ) -> Dict[str, Any]:
@@ -117,3 +125,7 @@ class UnifiedMesh:
             result["torch"] = self._torch_mesh.shard_tensor(data, axis, torch_spec)
 
         return result
+
+    def get_execution_scheme(self) -> dict[str, Any]:
+        """Return the active JAX/PyTorch-FSDP mesh scheme."""
+        return self._execution_scheme.model_dump()

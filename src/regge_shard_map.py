@@ -4,6 +4,9 @@ import numpy as np
 from jax import lax, shard_map
 from jax.sharding import Mesh, PartitionSpec
 
+from src.proto.return_schemas import FakeonCertification
+from src.proto.schema_enforcer import enforce_schema
+
 jax.config.update("jax_enable_x64", True)
 
 
@@ -105,6 +108,7 @@ class ShardedReggeSolver:
         self.last_convergence_mask = did_converge
         return roots
 
+    @enforce_schema(FakeonCertification)
     def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
         t_target = self.M2**2
         idx = jnp.argmin(jnp.abs(self.t_grid - t_target))

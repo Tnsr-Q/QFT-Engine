@@ -8,4 +8,7 @@ __all__ = [
     "MeshAxis",
     "PyTorchMeshAdapter",
     "UnifiedMesh",
+    "unify_jax_fsdp_scheme",
 ]
+
+from .schemes import unify_jax_fsdp_scheme

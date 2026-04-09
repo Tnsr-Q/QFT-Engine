@@ -6,6 +6,8 @@ import torch
 import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
 
+from src.proto.orbax_atomic import OrbaxAtomicStateIO
+
 
 class CheckpointedDistributedHessianPLCallback(pl.Callback):
     """Distributed Hessian/PL monitoring with activation checkpointing support."""
@@ -18,6 +20,7 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
         monitor_every: int = 50,
         warmup_steps: int = 100,
         use_checkpointing: bool = True,
+        state_save_path: str | None = None,
     ):
         self.pl_tol = pl_tol
         self.k = k_lanczos
@@ -25,6 +28,7 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
         self.monitor_every = monitor_every
         self.warmup_steps = warmup_steps
         self.use_checkpointing = use_checkpointing
+        self.state_io = OrbaxAtomicStateIO(state_save_path) if state_save_path else None
         self.loss_star = None
         self.mu_global = None
         self.L_global = None
@@ -109,6 +113,22 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
 
         return torch.linalg.eigvalsh(T)
 
+
+    def _export_state(self) -> dict[str, float | None]:
+        return {
+            "mu_global": self.mu_global,
+            "L_global": self.L_global,
+            "loss_star": self.loss_star,
+            "pl_tol": self.pl_tol,
+            "k_lanczos": self.k,
+            "reg_lambda": self.reg_lambda,
+        }
+
+    def save_state(self) -> None:
+        if self.state_io is None:
+            return
+        self.state_io.save(self._export_state())
+
     def on_train_batch_end(
         self,
         trainer: pl.Trainer,
@@ -178,6 +198,9 @@ class CheckpointedDistributedHessianPLCallback(pl.Callback):
                 logger=True,
                 sync_dist=True,
             )
+
+        if is_rank0:
+            self.save_state()
 
         if self._dist_ready():
             dist.barrier()
