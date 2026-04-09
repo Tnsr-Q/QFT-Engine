@@ -106,7 +106,7 @@ class TheorySpaceExplorer:
     def validate_against_predicates(self, hypothesis: TheoryHypothesis) -> Dict[str, bool]:
         results: Dict[str, bool] = {}
 
-        for pred_id in self.registry._predicates.keys():
+        for pred_id in self.registry.predicate_ids():
             predicate = self.registry.get_latest(pred_id)
             if not predicate:
                 continue
