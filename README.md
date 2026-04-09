@@ -550,11 +550,11 @@ any application-level instrumentation changes.
 
 ## ◈ CI / Workflow
 
-The GitHub Actions workflow (`.github/workflows/quft-verify.yml`) runs:
+The GitHub Actions workflow (`.github/workflows/quft-verify.yml`) performs:
 
 1. Docker build
-2. `bash scripts/run_suite.sh` inside the container
-3. JUnit XML artifact upload
+2. The verification/test steps defined in the workflow
+3. Upload of `results_*.xml` test result artifacts
 
 All 11 test files must pass. Physics tolerance failures are reported as
 `FAILED` with the residual value and the `params.yaml` bound that was violated.
