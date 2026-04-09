@@ -559,7 +559,7 @@ The GitHub Actions workflow (`.github/workflows/quft-verify.yml`) performs:
 2. The verification/test steps defined in the workflow
 3. Upload of `results_*.xml` test result artifacts
 
-All 11 test files must pass. Physics tolerance failures are reported as
+All test files under `tests/` must pass. Physics tolerance failures are reported as
 `FAILED` with the residual value and the `params.yaml` bound that was violated.
 
 ---
