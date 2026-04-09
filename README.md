@@ -78,13 +78,15 @@ QFT-Engine/
 
 ```yaml
 # configs/params.yaml — the single source of truth
-M2_GeV:          2.4e23   # Fakeon mass threshold (GeV) — UV cutoff
-f2_target:       1.0e-8   # Gravity coupling target at M2
-alpha_inelastic: 0.05     # S-matrix inelasticity decay constant
-froissart_C:     0.25     # Froissart-Martin coefficient
-pl_constant_lb:  2.4e-2   # Polyak-Łojasiewicz μ lower bound
-lyapunov_decay:  1.5e-2   # Lyapunov V_opt decay floor γ
-thermal_T_reh:   1.0e15   # Reheating temperature ceiling (GeV)
+roadmap:
+  M2_GeV:          2.4e23   # Fakeon mass threshold (GeV) — UV cutoff
+  f2_target:       1.0e-8   # Gravity coupling target at M2
+  alpha_inelastic: 0.05     # S-matrix inelasticity decay constant
+  froissart_C:     0.25     # Froissart-Martin coefficient
+assumptions:
+  pl_constant_lb:     2.4e-2   # Polyak-Łojasiewicz μ lower bound
+  lyapunov_decay_min: 1.5e-2   # Lyapunov V_opt decay floor γ
+  thermal_T_reh_max:  1.0e15   # Reheating temperature ceiling (GeV)
 ```
 
 <!-- VISUAL: Physics constants card grid — 7 parameter tiles, each with symbol, value, physical meaning, and which test it gates. Dark background, monochrome with teal accent on value. -->
