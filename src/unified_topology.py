@@ -37,6 +37,8 @@ class HybridTopologyManager:
         self.n_qpus = max(0, int(qpu_count))
         self.condition_threshold = float(condition_threshold)
 
+        if not mesh_axes:
+            raise ValueError("mesh_axes must be a non-empty tuple of mesh axis names.")
         devices = np.array(jax.devices()).reshape((-1,) + (1,) * (len(mesh_axes) - 1))
         self.classical_mesh = Mesh(devices, mesh_axes)
         self.classical_sharding = NamedSharding(self.classical_mesh, PartitionSpec(*mesh_axes))
