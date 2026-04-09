@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import gc
 import pytorch_lightning as pl
@@ -8,6 +8,7 @@ import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
 
 from src.spectral.robust_estimator import RobustSpectralEstimator
+from src.tolerance.dynamic_ledger import DynamicToleranceLedger
 
 
 class Zero3CheckpointedHessianPLCallback(pl.Callback):
@@ -25,6 +26,7 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         power_iters: int = 3,
         safety_factor: float = 1.15,
         ema_alpha: float = 0.9,
+        ledger: Optional[DynamicToleranceLedger] = None,
     ):
         self.pl_tol = pl_tol
         self.k = k_lanczos
@@ -36,6 +38,7 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         self.loss_star = None
         self.mu_global = None
         self.L_global = None
+        self.ledger = ledger
         self.spectral_est = RobustSpectralEstimator(
             k_lanczos=k_lanczos,
             power_iters=power_iters,
@@ -153,8 +156,15 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         cond_num = self.L_global / max(self.mu_global, 1e-10)
 
         loss_gap = float(loss_eval.detach()) - self.loss_star
-        pl_satisfied = (0.5 * grad_norm_sq / max(loss_gap, 1e-12)) >= self.pl_tol
+        pl_metric = 0.5 * grad_norm_sq / max(loss_gap, 1e-12)
+        pl_satisfied = pl_metric >= self.pl_tol
         new_lr = self.spectral_est.compute_adaptive_lr(self.L_global, self.mu_global, min_lr=1e-5)
+
+        if self.ledger is not None and is_rank0:
+            pl_residual = abs(pl_metric - 1.0)
+            adapted_tol = self.ledger.update_from_residual("hessian_pl", pl_residual, "hessian_callback")
+            if adapted_tol < self.pl_tol * 0.8:
+                self.pl_tol = adapted_tol
 
         if self._dist_ready():
             lr_tensor = torch.tensor(new_lr, device=loss_bp.device)

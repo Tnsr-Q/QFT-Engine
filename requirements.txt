@@ -8,3 +8,6 @@ pytorch-lightning>=2.2.0
 tensorboard>=2.15.0
 google-cloud-storage>=2.10.0
 deepspeed>=0.13.0
+
+pyarrow>=16.0.0
+pydantic>=2.0.0
