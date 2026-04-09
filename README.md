@@ -304,7 +304,7 @@ docker run --rm quft-engine
 ```bash
 export BUCKET="your-verify-bucket"
 bash scripts/deploy_gce.sh
-# Instance runs suite, uploads junit.xml to gs://$BUCKET/, shuts down.
+# Instance runs suite, uploads results/results.xml to gs://$BUCKET/, shuts down.
 ```
 
 ### JAX Sharded Regge
