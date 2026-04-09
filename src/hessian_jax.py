@@ -42,7 +42,10 @@ class JAXHessianEstimator:
         _, jv = jvp(self.constraint_fn, (theta,), (v,))
         _, vjp_fn = jax.vjp(self.constraint_fn, theta)
         jt_w_jv = vjp_fn(self.W * jv)[0]
-        return jt_w_jv + self.Lambda * v
+        hv = jt_w_jv + self.Lambda * v
+        # Replace NaN with 0.0 and Inf with the dtype's representable maximum,
+        # leaving all valid finite values unclipped to preserve the true spectral scale.
+        return jnp.nan_to_num(hv, nan=0.0)
 
     def lanczos_eigenvalues(
         self,
