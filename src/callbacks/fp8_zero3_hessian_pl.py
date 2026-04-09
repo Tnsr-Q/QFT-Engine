@@ -8,38 +8,13 @@ import torch
 import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
 
+from .precision_controller import PrecisionController
+
 log = logging.getLogger("QUFT_FP8Hessian")
 
 
-class FP8PrecisionManager:
-    """FP8 quantization manager with per-tensor dynamic scaling."""
-
-    def __init__(self, mode: str = "e4m3fn", hvp_dtype: torch.dtype = torch.float32):
-        self.hvp_dtype = hvp_dtype
-        self.fp8_scales: dict[str, torch.Tensor] = {}
-        self.fp8_dtype = getattr(torch, f"float8_{mode}", None)
-
-    @property
-    def fp8_supported(self) -> bool:
-        return self.fp8_dtype is not None
-
-    def to_fp8(self, tensor: torch.Tensor, name: str) -> torch.Tensor:
-        if not self.fp8_supported:
-            return tensor.to(self.hvp_dtype)
-
-        scale = torch.max(torch.abs(tensor)).detach() + 1e-8
-        scaled = (tensor / scale).clamp(-448, 448)
-        self.fp8_scales[name] = scale
-        return scaled.to(self.fp8_dtype)
-
-    def from_fp8(self, tensor: torch.Tensor, name: str) -> torch.Tensor:
-        if not self.fp8_supported:
-            return tensor.to(self.hvp_dtype)
-        return (tensor.to(self.hvp_dtype) * self.fp8_scales[name]).to(self.hvp_dtype)
-
-
 class FP8Zero3HessianPLCallback(pl.Callback):
-    """ZeRO-3/FSDP compatible Hessian-PL callback with FP8 gradient storage."""
+    """ZeRO-3/FSDP compatible Hessian-PL callback with negotiated precision storage."""
 
     def __init__(
         self,
@@ -49,7 +24,7 @@ class FP8Zero3HessianPLCallback(pl.Callback):
         monitor_every: int = 50,
         warmup_steps: int = 100,
         use_checkpointing: bool = True,
-        fp8_mode: str = "e4m3fn",
+        precision_target: str = "float8_e4m3fn",
     ):
         self.pl_tol = pl_tol
         self.k = k_lanczos
@@ -57,11 +32,10 @@ class FP8Zero3HessianPLCallback(pl.Callback):
         self.monitor_every = monitor_every
         self.warmup_steps = warmup_steps
         self.use_checkpointing = use_checkpointing
-        self.fp8_mgr = FP8PrecisionManager(fp8_mode)
+        self.prec_ctrl = PrecisionController(target_dtype_str=precision_target)
         self.loss_star = None
         self.mu_global = None
         self.L_global = None
-        self.quantization_error: list[float] = []
 
     @staticmethod
     def _dist_ready() -> bool:
@@ -103,7 +77,7 @@ class FP8Zero3HessianPLCallback(pl.Callback):
             return checkpoint(fn, *batch, use_reentrant=False)
         return checkpoint(fn, batch, use_reentrant=False)
 
-    def _hvp_fp8(
+    def _hvp_quantized(
         self,
         pl_module: pl.LightningModule,
         model: torch.nn.Module,
@@ -116,16 +90,12 @@ class FP8Zero3HessianPLCallback(pl.Callback):
             loss = self._checkpointed_forward(pl_module, batch, batch_idx)
             grads = torch.autograd.grad(loss, params, create_graph=True, retain_graph=True)
 
-            grad_v = sum(torch.sum(g.to(self.fp8_mgr.hvp_dtype) * v.to(self.fp8_mgr.hvp_dtype)) for g, v in zip(grads, vec))
+            grad_v = sum(torch.sum(g.to(torch.float32) * v.to(torch.float32)) for g, v in zip(grads, vec))
             hvp = torch.autograd.grad(grad_v, params, retain_graph=False)
 
-            q_err = torch.tensor(0.0, device=params[0].device)
-            for i, g in enumerate(grads):
-                name = f"grad_{i}"
-                gq = self.fp8_mgr.to_fp8(g.detach(), name)
-                grec = self.fp8_mgr.from_fp8(gq, name)
-                q_err = q_err + torch.sum((g.detach().to(self.fp8_mgr.hvp_dtype) - grec) ** 2)
-            self.quantization_error.append(float(q_err.detach().cpu().item()))
+            for g in grads:
+                quantized, scale = self.prec_ctrl.quantize(g.detach())
+                _ = self.prec_ctrl.track_quantization_error(g.detach(), quantized, scale)
 
         return hvp
 
@@ -148,7 +118,7 @@ class FP8Zero3HessianPLCallback(pl.Callback):
         beta_prev = torch.tensor(0.0, device=device)
 
         for _ in range(self.k):
-            hvp = self._hvp_fp8(pl_module, model, params, batch, batch_idx, q)
+            hvp = self._hvp_quantized(pl_module, model, params, batch, batch_idx, q)
             hvp32 = [h.to(torch.float32) for h in hvp]
 
             alpha = sum(torch.sum(qi * hi) for qi, hi in zip(q, hvp32))
@@ -156,7 +126,6 @@ class FP8Zero3HessianPLCallback(pl.Callback):
 
             r = [hi - alpha * qi - beta_prev * qpi for hi, qi, qpi in zip(hvp32, q, q_prev)]
 
-            # MGS re-orthogonalization against q and q_prev
             dot_q = sum(torch.sum(ri * qi) for ri, qi in zip(r, q))
             r = [ri - dot_q * qi for ri, qi in zip(r, q)]
             dot_prev = sum(torch.sum(ri * qpi) for ri, qpi in zip(r, q_prev))
@@ -222,9 +191,9 @@ class FP8Zero3HessianPLCallback(pl.Callback):
         self.L_global = float(np.max(all_eigs)) + self.reg_lambda
         cond_num = self.L_global / max(self.mu_global, 1e-10)
 
-        avg_q_err = float(np.mean(self.quantization_error[-10:])) if self.quantization_error else 0.0
-        if avg_q_err > 1e-3 and self.mu_global < self.pl_tol:
-            log.warning("FP8 quantization may degrade PL constant; BF16 fallback is recommended.")
+        avg_q_err = self.prec_ctrl.telemetry["precision/quantization_error"]
+        if not np.isnan(avg_q_err) and avg_q_err > 1e-3 and self.mu_global < self.pl_tol:
+            log.warning("Quantization may degrade PL constant; BF16 fallback is recommended.")
 
         if is_rank0:
             loss_gap = float(loss_eval.detach()) - self.loss_star
@@ -242,15 +211,20 @@ class FP8Zero3HessianPLCallback(pl.Callback):
                 for pg in trainer.optimizers[0].param_groups:
                     pg["lr"] = new_lr
 
+            telemetry = self.prec_ctrl.telemetry
+            metrics = {
+                "dist/hessian/mu": self.mu_global,
+                "dist/hessian/L": self.L_global,
+                "dist/hessian/condition_number": cond_num,
+                "dist/optimizer/pl_satisfied": float(pl_satisfied),
+                "dist/optimizer/adaptive_lr": new_lr,
+                "dist/precision/fp8_available": float(telemetry["precision/fp8_available"]),
+                "dist/precision/compile_compatible": float(telemetry["precision/compile_compatible"]),
+                "dist/precision/quantization_error": float(telemetry["precision/quantization_error"]),
+            }
+
             pl_module.log_dict(
-                {
-                    "dist/hessian/mu": self.mu_global,
-                    "dist/hessian/L": self.L_global,
-                    "dist/hessian/condition_number": cond_num,
-                    "dist/optimizer/pl_satisfied": float(pl_satisfied),
-                    "dist/optimizer/adaptive_lr": new_lr,
-                    "dist/fp8/quantization_error": avg_q_err,
-                },
+                metrics,
                 prog_bar=True,
                 logger=True,
                 sync_dist=True,
