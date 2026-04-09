@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -10,6 +12,8 @@ from torch.utils.checkpoint import checkpoint
 logger = logging.getLogger(__name__)
 
 from src.proto.orbax_atomic import OrbaxAtomicStateIO
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointedDistributedHessianPLCallback(pl.Callback):

@@ -39,6 +39,7 @@ class OrbaxAtomicStateIO:
                 os.unlink(tmp_path)
 
     def restore(self) -> dict[str, Any]:
+        # First try to restore via Orbax, falling back to JSON file if that fails.
         try:
             import orbax.checkpoint as ocp  # type: ignore
 
@@ -52,6 +53,7 @@ class OrbaxAtomicStateIO:
                 exc_info=True,
             )
 
+        # JSON-based restore with graceful handling for missing/corrupt state.
         try:
             with open(self.path, encoding="utf-8") as f:
                 payload = json.load(f)
