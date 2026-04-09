@@ -4,6 +4,8 @@ import numpy as np
 from jax import lax, shard_map
 from jax.sharding import Mesh, PartitionSpec
 
+from src.contracts import FakeonCertificate, enforce_schema
+
 jax.config.update("jax_enable_x64", True)
 
 
@@ -51,13 +53,13 @@ class ShardedReggeSolver:
         delta_mean: float,
         max_iter: int,
         tol: float,
-    ) -> float:
+    ) -> tuple[float, bool]:
         def cond(carry):
-            i, _, f = carry
-            return (i < max_iter) & (jnp.abs(f) > tol)
+            i, _, f, converged = carry
+            return (i < max_iter) & (~converged) & (jnp.abs(f) > tol)
 
         def body(carry):
-            i, l, _ = carry
+            i, l, _, _ = carry
             f_val = ShardedReggeSolver._pole_condition_real(l, s_val, delta_mean)
             _, df_dl = jax.jvp(
                 lambda x: ShardedReggeSolver._pole_condition_real(x, s_val, delta_mean),
@@ -65,18 +67,21 @@ class ShardedReggeSolver:
                 (1.0,),
             )
             l_new = l - f_val / (df_dl + 1e-12)
-            return i + 1, l_new, f_val
+            f_new = ShardedReggeSolver._pole_condition_real(l_new, s_val, delta_mean)
+            converged = jnp.abs(f_new) <= tol
+            return i + 1, l_new, f_new, converged
 
         f0 = ShardedReggeSolver._pole_condition_real(l_init, s_val, delta_mean)
-        _, l_final, _ = lax.while_loop(cond, body, (0, l_init, f0))
-        return l_final
+        initial = (0, l_init, f0, jnp.abs(f0) <= tol)
+        _, l_final, _, converged = lax.while_loop(cond, body, initial)
+        return l_final, converged
 
     def _process_chunk(
         self,
         s_chunk: jnp.ndarray,
         l0_chunk: jnp.ndarray,
         delta_chunk: jnp.ndarray,
-    ) -> jnp.ndarray:
+    ) -> tuple[jnp.ndarray, jnp.ndarray]:
         return jax.vmap(self._newton_step, in_axes=(0, 0, 0, None, None))(
             l0_chunk,
             s_chunk,
@@ -85,12 +90,16 @@ class ShardedReggeSolver:
             self.tol,
         )
 
-    def scan_regge_trajectory_sharded(self, delta_at_t: jnp.ndarray) -> jnp.ndarray:
+    def scan_regge_trajectory_sharded(
+        self,
+        delta_at_t: jnp.ndarray,
+        return_convergence: bool = False,
+    ) -> jnp.ndarray | tuple[jnp.ndarray, jnp.ndarray]:
         l0 = jnp.ones_like(self.t_grid) * 1.95
         common_kwargs = dict(
             mesh=self.mesh,
             in_specs=(self.shard_spec, self.shard_spec, self.shard_spec),
-            out_specs=self.shard_spec,
+            out_specs=(self.shard_spec, self.shard_spec),
         )
         try:
             sharded_fn = shard_map(self._process_chunk, check_vma=False, **common_kwargs)
@@ -99,9 +108,14 @@ class ShardedReggeSolver:
                 sharded_fn = shard_map(self._process_chunk, check_rep=False, **common_kwargs)
             except TypeError:
                 sharded_fn = shard_map(self._process_chunk, **common_kwargs)
-        return sharded_fn(self.s_cross, l0, delta_at_t)
 
-    def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
+        alpha_traj, did_converge = sharded_fn(self.s_cross, l0, delta_at_t)
+        if return_convergence:
+            return alpha_traj, did_converge
+        return alpha_traj
+
+    @enforce_schema(FakeonCertificate)
+    def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> FakeonCertificate:
         t_target = self.M2**2
         idx = jnp.argmin(jnp.abs(self.t_grid - t_target))
         alpha_M2 = alpha_traj[idx]

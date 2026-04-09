@@ -36,7 +36,6 @@ class VectorizedReggeSolver:
         S_c = eta_c * jnp.exp(2j * delta_mean)
         return jnp.imag(1.0 / (1.0 - S_c))
 
-    @jit
     def _newton_trajectory_step(self, l_init: float, s_val: float, delta_mean: float) -> float:
         """JAX-traceable Newton-Raphson update for Re[alpha(t)]."""
 
