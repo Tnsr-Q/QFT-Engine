@@ -25,6 +25,7 @@ class VectorizedReggeSolver:
         self.max_iter = max_iter
         self.tol = tol
         self.s_cross = jnp.maximum(self.t_grid, 4.0 * 0.01)
+        self.last_convergence_mask = jnp.zeros_like(self.t_grid, dtype=bool)
 
     @staticmethod
     @jit
@@ -36,8 +37,7 @@ class VectorizedReggeSolver:
         S_c = eta_c * jnp.exp(2j * delta_mean)
         return jnp.imag(1.0 / (1.0 - S_c))
 
-    @jit
-    def _newton_trajectory_step(self, l_init: float, s_val: float, delta_mean: float) -> float:
+    def _newton_trajectory_step(self, l_init: float, s_val: float, delta_mean: float) -> tuple[float, bool]:
         """JAX-traceable Newton-Raphson update for Re[alpha(t)]."""
 
         def cond(carry):
@@ -51,13 +51,16 @@ class VectorizedReggeSolver:
             l_new = l - f_val / (f_grad + 1e-12)
             return i + 1, l_new, f_val
 
-        _, l_final, _ = lax.while_loop(cond, body, (0, l_init, 1.0))
-        return l_final
+        iters, l_final, f_final = lax.while_loop(cond, body, (0, l_init, 1.0))
+        did_converge = (jnp.abs(f_final) <= self.tol) & (iters < self.max_iter)
+        return l_final, did_converge
 
     def scan_regge_trajectory(self, delta_at_t: jnp.ndarray) -> jnp.ndarray:
         """Vectorized Regge pole tracking across the t-channel grid."""
         l0 = jnp.ones_like(self.t_grid) * 1.95
-        return vmap(self._newton_trajectory_step)(l0, self.s_cross, delta_at_t)
+        roots, did_converge = vmap(self._newton_trajectory_step)(l0, self.s_cross, delta_at_t)
+        self.last_convergence_mask = did_converge
+        return roots
 
     def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
         """Check Re[alpha(M2^2)] < 0 fakeon virtualization criterion."""
