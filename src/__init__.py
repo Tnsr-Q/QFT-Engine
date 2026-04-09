@@ -7,6 +7,9 @@ from .proto.constraint_schema import AssumptionTag, ConstraintRole, PhysicsPredi
 from .proto.registry import PredicateRegistry
 from .proto.serializer import Serializer
 from .truth.universality_kernel import UniversalityKernel
+from .rl_conjecture_loop import AletheiaAgent, TheorySpaceEnv
+from .unified_topology import HybridTopologyManager
+
 
 __version__ = "2.0.0"
 
@@ -25,4 +28,7 @@ __all__ = [
     "TheoryHypothesis",
     "TheorySpaceExplorer",
     "UniversalityKernel",
+    "HybridTopologyManager",
+    "TheorySpaceEnv",
+    "AletheiaAgent",
 ]
