@@ -1,12 +1,13 @@
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Callable
 
 import gc
-import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.distributed as dist
 from torch.utils.checkpoint import checkpoint
+
+from src.spectral.robust_estimator import RobustSpectralEstimator
 
 
 class Zero3CheckpointedHessianPLCallback(pl.Callback):
@@ -21,6 +22,9 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         warmup_steps: int = 100,
         use_checkpointing: bool = True,
         gather_sync: bool = True,
+        power_iters: int = 3,
+        safety_factor: float = 1.15,
+        ema_alpha: float = 0.9,
     ):
         self.pl_tol = pl_tol
         self.k = k_lanczos
@@ -32,6 +36,13 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         self.loss_star = None
         self.mu_global = None
         self.L_global = None
+        self.spectral_est = RobustSpectralEstimator(
+            k_lanczos=k_lanczos,
+            power_iters=power_iters,
+            safety_factor=safety_factor,
+            ema_alpha=ema_alpha,
+            reg_floor=reg_lambda,
+        )
 
     @staticmethod
     def _dist_ready() -> bool:
@@ -90,58 +101,23 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
             hvp = torch.autograd.grad(grad_v, params, retain_graph=False)
         return hvp
 
-    def _distributed_lanczos(
+    def _build_hvp_fn(
         self,
         model: torch.nn.Module,
         pl_module: pl.LightningModule,
         params: list[torch.Tensor],
         batch: Any,
         batch_idx: int,
-    ) -> torch.Tensor:
-        del model
-        q_prev = [torch.zeros_like(p) for p in params]
-        q = [torch.randn_like(p) for p in params]
-        q_norm = torch.sqrt(sum(torch.sum(x * x) for x in q))
-        q = [x / (q_norm + 1e-12) for x in q]
-
-        alphas: list[torch.Tensor] = []
-        betas: list[torch.Tensor] = []
-        device = params[0].device
-        beta_prev = torch.tensor(0.0, device=device)
-
-        for _ in range(self.k):
-            hvp = self._hvp_gathered(model, pl_module, params, batch, batch_idx, q)
-            alpha = sum(torch.sum(v_elem * h_elem) for v_elem, h_elem in zip(q, hvp))
-            alphas.append(alpha)
-
-            r = [h_elem - alpha * v_elem - beta_prev * qp for h_elem, v_elem, qp in zip(hvp, q, q_prev)]
-            beta = torch.sqrt(sum(torch.sum(ri * ri) for ri in r))
-            if beta < 1e-10:
-                break
-            betas.append(beta)
-
-            q_prev = q
-            q = [ri / (beta + 1e-12) for ri in r]
-            beta_prev = beta
-
-            del hvp, r
-            if self.gather_sync and torch.cuda.is_available() and device.type == "cuda":
-                torch.cuda.synchronize(device)
+    ) -> Callable[[list[torch.Tensor]], list[torch.Tensor]]:
+        def hvp_fn(v: list[torch.Tensor]) -> list[torch.Tensor]:
+            hvp = self._hvp_gathered(model, pl_module, params, batch, batch_idx, v)
+            if self.gather_sync and torch.cuda.is_available() and params[0].device.type == "cuda":
+                torch.cuda.synchronize(params[0].device)
                 gc.collect()
                 torch.cuda.empty_cache()
+            return hvp
 
-        n = len(alphas)
-        if n == 0:
-            return torch.tensor([self.reg_lambda, self.reg_lambda], device=device)
-
-        T = torch.zeros((n, n), device=device)
-        for i in range(n):
-            T[i, i] = alphas[i]
-            if i < n - 1 and i < len(betas):
-                T[i, i + 1] = betas[i]
-                T[i + 1, i] = betas[i]
-
-        return torch.linalg.eigvalsh(T)
+        return hvp_fn
 
     def on_train_batch_end(
         self,
@@ -171,39 +147,29 @@ class Zero3CheckpointedHessianPLCallback(pl.Callback):
         grad_sq = self._all_reduce_tensor(grad_sq)
         grad_norm_sq = float(grad_sq.detach())
 
-        local_eigs = self._distributed_lanczos(model, pl_module, params, batch, batch_idx)
-        if self._dist_ready():
-            gathered = [torch.zeros_like(local_eigs) for _ in range(dist.get_world_size())]
-            dist.all_gather(gathered, local_eigs)
-            all_eigs = torch.cat(gathered).detach().cpu().numpy()
-        else:
-            all_eigs = local_eigs.detach().cpu().numpy()
-
-        self.mu_global = float(np.min(all_eigs)) + self.reg_lambda
-        self.L_global = float(np.max(all_eigs)) + self.reg_lambda
+        hvp_fn = self._build_hvp_fn(model, pl_module, params, batch, batch_idx)
+        v_sample = [torch.randn_like(p) for p in params]
+        self.L_global, self.mu_global = self.spectral_est.estimate(hvp_fn, v_sample)
         cond_num = self.L_global / max(self.mu_global, 1e-10)
 
+        loss_gap = float(loss_eval.detach()) - self.loss_star
+        pl_satisfied = (0.5 * grad_norm_sq / max(loss_gap, 1e-12)) >= self.pl_tol
+        new_lr = self.spectral_est.compute_adaptive_lr(self.L_global, self.mu_global, min_lr=1e-5)
+
+        if self._dist_ready():
+            lr_tensor = torch.tensor(new_lr, device=loss_bp.device)
+            dist.broadcast(lr_tensor, src=0)
+            new_lr = float(lr_tensor.item())
+
+        if trainer.optimizers:
+            for pg in trainer.optimizers[0].param_groups:
+                pg["lr"] = new_lr
+
         if is_rank0:
-            loss_gap = float(loss_eval.detach()) - self.loss_star
-            pl_satisfied = (0.5 * grad_norm_sq / max(loss_gap, 1e-12)) >= self.pl_tol
-
-            eta_opt = 1.0 / max(self.L_global + self.mu_global, 1e-12)
-            eta_bar = 2.0 / max(self.L_global, 1e-12)
-            new_lr = float(np.clip(eta_opt, 1e-5, eta_bar * 0.9))
-
-            if self._dist_ready():
-                lr_tensor = torch.tensor(new_lr, device=loss_bp.device)
-                dist.broadcast(lr_tensor, src=0)
-                new_lr = float(lr_tensor.item())
-
-            if trainer.optimizers:
-                for pg in trainer.optimizers[0].param_groups:
-                    pg["lr"] = new_lr
-
             pl_module.log_dict(
                 {
-                    "dist/hessian/mu": self.mu_global,
-                    "dist/hessian/L": self.L_global,
+                    "dist/hessian/mu_safe": self.mu_global,
+                    "dist/hessian/L_safe": self.L_global,
                     "dist/hessian/condition_number": cond_num,
                     "dist/optimizer/pl_satisfied": float(pl_satisfied),
                     "dist/optimizer/adaptive_lr": new_lr,
