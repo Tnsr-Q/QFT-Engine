@@ -98,8 +98,9 @@ class AletheiaAgent:
     def refine_theory(self, steps: int = 1000):
         self.model.learn(total_timesteps=int(steps))
         obs = self.env.reset()
-        best_theta, _ = self.model.predict(obs, deterministic=True)
-        return np.asarray(best_theta, dtype=float)
+        action, _ = self.model.predict(obs, deterministic=True)
+        refined_theta, _, _, _ = self.env.step(action)
+        return np.asarray(refined_theta, dtype=float)
 
 
 def make_certificate(status: str = "PENDING") -> Any:
