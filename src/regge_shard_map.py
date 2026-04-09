@@ -32,6 +32,7 @@ class ShardedReggeSolver:
         self.max_iter = max_iter
         self.tol = tol
         self.s_cross = jnp.maximum(self.t_grid, 4.0 * 0.01)
+        self.last_convergence_mask = jnp.zeros_like(self.t_grid, dtype=bool)
 
         self.mesh = Mesh(np.array(devices), ("dev",))
         self.shard_spec = PartitionSpec("dev")
@@ -51,7 +52,7 @@ class ShardedReggeSolver:
         delta_mean: float,
         max_iter: int,
         tol: float,
-    ) -> float:
+    ) -> tuple[float, bool]:
         def cond(carry):
             i, _, f = carry
             return (i < max_iter) & (jnp.abs(f) > tol)
@@ -68,15 +69,16 @@ class ShardedReggeSolver:
             return i + 1, l_new, f_val
 
         f0 = ShardedReggeSolver._pole_condition_real(l_init, s_val, delta_mean)
-        _, l_final, _ = lax.while_loop(cond, body, (0, l_init, f0))
-        return l_final
+        iters, l_final, f_final = lax.while_loop(cond, body, (0, l_init, f0))
+        did_converge = (jnp.abs(f_final) <= tol) & (iters < max_iter)
+        return l_final, did_converge
 
     def _process_chunk(
         self,
         s_chunk: jnp.ndarray,
         l0_chunk: jnp.ndarray,
         delta_chunk: jnp.ndarray,
-    ) -> jnp.ndarray:
+    ) -> tuple[jnp.ndarray, jnp.ndarray]:
         return jax.vmap(self._newton_step, in_axes=(0, 0, 0, None, None))(
             l0_chunk,
             s_chunk,
@@ -90,7 +92,7 @@ class ShardedReggeSolver:
         common_kwargs = dict(
             mesh=self.mesh,
             in_specs=(self.shard_spec, self.shard_spec, self.shard_spec),
-            out_specs=self.shard_spec,
+            out_specs=(self.shard_spec, self.shard_spec),
         )
         try:
             sharded_fn = shard_map(self._process_chunk, check_vma=False, **common_kwargs)
@@ -99,7 +101,9 @@ class ShardedReggeSolver:
                 sharded_fn = shard_map(self._process_chunk, check_rep=False, **common_kwargs)
             except TypeError:
                 sharded_fn = shard_map(self._process_chunk, **common_kwargs)
-        return sharded_fn(self.s_cross, l0, delta_at_t)
+        roots, did_converge = sharded_fn(self.s_cross, l0, delta_at_t)
+        self.last_convergence_mask = did_converge
+        return roots
 
     def verify_fakeon_virtualization(self, alpha_traj: jnp.ndarray) -> dict:
         t_target = self.M2**2
