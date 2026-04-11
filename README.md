@@ -1,5 +1,4 @@
 
-Save this as assets/qft-engine-hero.svg
 
 <svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
