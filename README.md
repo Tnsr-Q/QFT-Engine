@@ -1,3 +1,8 @@
+Absolutely — here is the final polished README rewrite with a clean spot for your future SVG hero/particle graphic near the top. It is structured so you can later swap:
+
+<img src="./assets/qft-engine-hero.svg" ...>
+
+for whatever SVG you create. The sections and repo references are aligned to the project structure and draft content you shared.  ￼
 
 <div align="center">
 
@@ -6,77 +11,81 @@
 ### High-performance verification framework for computational QFT workflows
 
 <p>
-  A research-grade engine for symbolic consistency checks, renormalization flow analysis,
-  spectral methods, Regge trajectory solving, bootstrap experiments, and distributed Hessian telemetry.
+  QFT-Engine unifies symbolic validation, numerical solvers, topology-aware execution,
+  precision telemetry, and structured scientific outputs into one research-grade stack.
 </p>
 
 <p>
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/JAX-XLA%20Accelerated-FC6D26?style=for-the-badge" alt="JAX">
   <img src="https://img.shields.io/badge/PyTorch-Lightning-red?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch Lightning">
-  <img src="https://img.shields.io/badge/pytest-Tested-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="pytest">
   <img src="https://img.shields.io/badge/DeepSpeed-Distributed-5B21B6?style=for-the-badge" alt="DeepSpeed">
+  <img src="https://img.shields.io/badge/pytest-Verified-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="pytest">
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+</p>
+
+<p>
+  <strong>Symbolic checks</strong> •
+  <strong>RGE solvers</strong> •
+  <strong>Spectral analysis</strong> •
+  <strong>Regge tracking</strong> •
+  <strong>Hessian telemetry</strong>
 </p>
 
 </div>
 
 ---
 
+<p align="center">
+  <img src="./assets/qft-engine-hero.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
+</p>
+
+<p align="center">
+  <em>Replace this with your SVG hero graphic or connected particle-model visualization.</em>
+</p>
+
+---
+
 ## Overview
 
-**QFT-Engine** is a modular verification and analysis framework for advanced theoretical and numerical physics workflows.
+**QFT-Engine** is a research-oriented verification and analysis framework for advanced theoretical and numerical physics workflows.
 
-It brings together:
+It combines solver development, validation infrastructure, execution topology, and reproducibility controls into a single codebase. Rather than acting as a general-purpose simulation package, the repository is structured as a **verification stack**: a system for running, testing, comparing, and auditing computational QFT routines across multiple numerical and distributed execution modes.
 
-- symbolic validation of formal constraints
+At a high level, the project brings together:
+
+- symbolic consistency checks
 - renormalization group and flow-based solvers
 - spectral and dispersive analysis
-- bootstrap and Regge-trajectory methods
+- bootstrap and Regge-trajectory workflows
 - distributed Hessian estimation and precision control
-- schema-enforced outputs, device-mesh abstraction, and adaptive tolerance governance
-
-This repository is best understood as a **verification stack** for research computation — not a consumer-facing application, but an extensible engine for running, testing, and auditing specialized numerical physics pipelines. 
+- schema-enforced outputs, device-mesh coordination, and adaptive tolerance governance
 
 ---
 
-## Architecture
+## Why QFT-Engine
 
+<div align="center">
 
+| Physics-aware | Execution-aware | Validation-aware |
+|---|---|---|
+| Domain-specific solver families for QFT-style workflows | JAX, PyTorch Lightning, DeepSpeed, TensorBoard, Docker | Schema enforcement, tolerance ledgers, structured outputs |
 
-<p align="center">
-  <em>End-to-end data flow across validation, solver execution, spectral analysis, topology coordination, logging, serialization, and downstream system output.</em>
-</p>
+</div>
 
-<p align="center">
-  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
-</p>
----
+### What makes it different
 
-## Why this project stands out
-
-<table>
-  <tr>
-    <td valign="top" width="33%">
-      <h3>Physics-aware computation</h3>
-      <p>Built around domain-specific solver families including RGE, spectral, bootstrap, and Regge workflows rather than generic ML-only infrastructure.</p>
-    </td>
-    <td valign="top" width="33%">
-      <h3>Modern execution stack</h3>
-      <p>Combines NumPy, SciPy, JAX, PyTorch Lightning, DeepSpeed, TensorBoard, and distributed execution patterns in one codebase.</p>
-    </td>
-    <td valign="top" width="33%">
-      <h3>Governed outputs</h3>
-      <p>Schema enforcement, mesh abstraction, and tolerance ledgers provide structural validation, execution coordination, and reproducibility support.</p>
-    </td>
-  </tr>
-</table>
+- Built around **solver families**, not a single model or script
+- Designed for **execution-aware research code**, including multi-backend and distributed workflows
+- Treats **schemas, tolerances, and output structure** as part of the system architecture
+- Backed by a meaningful **test and integration surface**
 
 ---
 
-## Core capabilities
+## Core Capabilities
 
 ### Numerical and solver systems
+
 - **RGE solving** for renormalization-flow experiments
 - **Flow-based solvers** for spectral and dynamical analysis
 - **Discretized bootstrap routines** for constrained amplitude workflows
@@ -84,24 +93,60 @@ This repository is best understood as a **verification stack** for research comp
 - **JAX Hessian estimation** with quantized variants and distributed support
 
 ### Validation and consistency tooling
+
 - symbolic BRST-style verification
 - residual and predicate validation
 - spectral consistency checks
 - runtime schema enforcement for structured solver outputs
 
 ### Infrastructure and execution layers
+
 - JAX and PyTorch unified topology abstractions
 - tolerance priors and adaptive ledger tracking
 - PyTorch Lightning callbacks for Hessian telemetry, ZeRO-3, FP8, and CPU fallback
 - profiling, TensorBoard, and cloud deployment scripts
 
-These capabilities are reflected directly in the `src/`, `configs/`, `scripts/`, and `tests/` layout of the repository. 
-
 ---
 
-## Repository structure
+## Architecture
 
 ```text
+Inputs
+├── runtime configs
+├── tolerance priors
+├── commands / scripts
+└── initial solver state
+        │
+        ▼
+Validation & preprocessing
+        │
+        ▼
+Core solver layer
+├── RGE
+├── flow
+├── spectral
+├── bootstrap
+├── Regge
+└── Hessian / optimization
+        │
+        ▼
+Governance layer
+├── schema enforcement
+├── mesh coordination
+└── tolerance control
+        │
+        ▼
+Outputs
+├── logs and diagnostics
+├── checkpoints
+├── serialized artifacts
+└── test / report outputs
+
+
+⸻
+
+Repository Structure
+
 QFT-Engine/
 ├── configs/
 │   ├── params.yaml
@@ -145,9 +190,9 @@ QFT-Engine/
 
 ⸻
 
-Key subsystems
+Key Subsystems
 
-1. Solver layer
+Solver layer
 
 The solver surface spans multiple computational styles and execution models:
 	•	src/rge_solver.py
@@ -162,9 +207,9 @@ The solver surface spans multiple computational styles and execution models:
 	•	src/hessian_jax.py
 	•	src/hessian_qjax.py
 
-This design suggests a repo optimized for comparing methods, scaling execution paths, and validating behavior across both classical and accelerated numerical workflows.
+This structure supports method comparison, backend scaling, and validation across both classical and accelerated numerical workflows.
 
-2. Schema and serialization layer
+Schema and serialization layer
 
 The src/proto/ package provides:
 	•	constraint schemas
@@ -174,18 +219,18 @@ The src/proto/ package provides:
 	•	serializers
 	•	atomic checkpoint support
 
-That gives the project a structured contract layer around solver outputs instead of relying on loose dictionaries alone.
+This gives the project a structured contract layer around solver outputs.
 
-3. Mesh and topology layer
+Mesh and topology layer
 
 The src/mesh/ package provides:
 	•	topology abstractions
 	•	execution schemes
 	•	unified mesh coordination
 
-This makes the codebase more execution-aware than a typical research repo and positions it better for distributed and cross-framework workflows.
+This makes the repository more execution-aware than a typical research codebase and supports distributed or cross-framework workflows.
 
-4. Tolerance governance
+Tolerance governance
 
 The src/tolerance/ package and configs/tolerance_priors.yaml indicate an explicit system for:
 	•	tolerance baselines
@@ -193,11 +238,11 @@ The src/tolerance/ package and configs/tolerance_priors.yaml indicate an explici
 	•	regime detection
 	•	residual-aware control
 
-That is a strong architectural signal: numerical thresholds are treated as managed system state rather than hidden constants.
+Numerical thresholds are treated as managed runtime state rather than scattered constants.
 
-5. Callback and distributed telemetry layer
+Callback and telemetry layer
 
-The callback set includes:
+The callback surface includes:
 	•	checkpointed Hessian paths
 	•	distributed Hessian monitoring
 	•	ZeRO-3 variants
@@ -205,7 +250,7 @@ The callback set includes:
 	•	CPU fallback variants
 	•	precision control
 
-This gives the repo serious experimentation and runtime-observability value for large-scale or precision-sensitive workloads.
+This gives the repo strong observability and experimentation value for large-scale or precision-sensitive workloads.
 
 ⸻
 
@@ -214,7 +259,7 @@ Installation
 Prerequisites
 	•	Python 3.10+
 	•	pip
-	•	optional GPU / multi-device environment for advanced execution paths
+	•	optional GPU or multi-device environment for advanced execution paths
 	•	Docker for containerized runs
 
 Install dependencies
@@ -222,16 +267,14 @@ Install dependencies
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-The repository requirements include NumPy, SciPy, JAX, pytest, PyYAML, PyTorch, PyTorch Lightning, TensorBoard, Google Cloud Storage support, DeepSpeed, PyArrow, and Pydantic.
-
-Optional package sometimes used directly
+Optional package used by some workflows
 
 pip install sympy
 
 
 ⸻
 
-Quick start
+Quick Start
 
 Run the full verification suite
 
@@ -250,11 +293,10 @@ Build and run with Docker
 docker build -t qft-engine -f docker/Dockerfile .
 docker run --rm qft-engine
 
-The repo ships both a test wrapper and a Dockerfile for reproducible execution.
 
 ⸻
 
-Example workflows
+Example Workflows
 
 JAX sharded Regge execution
 
@@ -289,7 +331,7 @@ Configuration
 
 configs/params.yaml
 
-This file contains the main runtime controls for:
+Contains the main runtime controls for:
 	•	roadmap constants
 	•	solver tolerances
 	•	iteration limits
@@ -299,7 +341,7 @@ This file contains the main runtime controls for:
 
 configs/tolerance_priors.yaml
 
-This file defines tolerance policies for subsystems such as:
+Defines tolerance policies for subsystems such as:
 	•	rge_atol
 	•	hessian_pl
 	•	bootstrap_unitarity
@@ -309,9 +351,11 @@ Together these files form the numerical control plane for the engine.
 
 ⸻
 
-Testing strategy
+Testing Strategy
 
-The test suite spans more than a simple smoke check. Current test coverage includes:
+The test suite covers much more than a smoke test.
+
+Coverage areas
 	•	regression behavior
 	•	flow fixed-point checks
 	•	bootstrap and JAX integration
@@ -323,7 +367,7 @@ The test suite spans more than a simple smoke check. Current test coverage inclu
 	•	profiler and compression integration
 	•	GCE and multi-device integration
 
-Representative test files include:
+Representative tests
 	•	test_bootstrap_jax.py
 	•	test_flow_fixed_point.py
 	•	test_nonperturbative_unitarity.py
@@ -332,11 +376,11 @@ Representative test files include:
 	•	test_tolerance_ledger.py
 	•	test_robust_spectral.py
 
-This is one of the repo’s strongest qualities: the architecture is accompanied by a substantial verification surface.
+One of the repo’s strongest qualities is that the architecture is backed by a substantial verification surface.
 
 ⸻
 
-Included operational tooling
+Operational Tooling
 
 Local and CI execution
 	•	scripts/run_suite.sh
@@ -355,11 +399,11 @@ Cloud deployment
 GitHub Actions
 	•	.github/workflows/quft-verify.yml
 
-This gives the project a strong “research + systems” identity rather than a standalone notebook-style workflow.
+This gives the project a strong research-plus-systems identity rather than a notebook-only workflow.
 
 ⸻
 
-Technology stack
+Technology Stack
 
 <div align="center">
 
@@ -379,13 +423,11 @@ Packaging / runtime	Docker
 
 ⸻
 
-Design philosophy
-
-QFT-Engine appears to be organized around a few clear principles:
+Design Philosophy
 
 Structured computation
 
-Solver output is not treated as an afterthought. The repo includes schema, registry, serializer, and checkpoint layers to keep computational results traceable and structured.
+Solver output is not treated as an afterthought. The repository includes schema, registry, serializer, and checkpoint layers to keep computational results traceable and structured.
 
 Execution-aware research code
 
@@ -393,7 +435,7 @@ The presence of vmap, pmap, shard_map, callback variants, mesh abstractions, and
 
 Verification over hype
 
-The repository leans heavily into tests, tolerances, validations, and explicit infrastructure around residuals and execution modes.
+The repository leans into tests, tolerances, validations, and explicit infrastructure around residuals and execution modes.
 
 Modular extension
 
@@ -406,7 +448,7 @@ Subsystems are separated cleanly enough that contributors can extend:
 
 ⸻
 
-Ideal use cases
+Ideal Use Cases
 
 This repository is a strong fit for people who want to:
 	•	prototype or extend computational QFT verification workflows
@@ -418,13 +460,45 @@ This repository is a strong fit for people who want to:
 ⸻
 
 Contributing
-
-Contributions are easiest to review when they follow the structure already present in the repo:
-	1.	install dependencies
-	2.	run the existing test suite
-	3.	keep changes scoped to a subsystem
-	4.	update configs, tests, and documentation with behavior changes
-	5.	preserve or improve validation and reproducibility pathways
+	1.	Install dependencies.
+	2.	Run the existing test suite.
+	3.	Keep changes scoped to a subsystem.
+	4.	Update configs, tests, and docs with behavior changes.
+	5.	Preserve or improve validation and reproducibility pathways.
 
 ⸻
 
+License
+
+Add this once the repo includes a LICENSE file.
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
+
+
+⸻
+
+
+<div align="center">
+
+
+QFT-Engine
+
+Research computation, validated execution, and reproducible verification.
+
+</div>
+```
+
+
+Best file path for your future SVG:
+
+assets/qft-engine-hero.svg
+
+And the line to keep in the README is:
+
+<p align="center">
+  <img src="./assets/qft-engine-hero.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
+</p>
+
+Next, I can give you the matching SVG layout blueprint for the connected circular particle-model graphic so it fits this README exactly.
