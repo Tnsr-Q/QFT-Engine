@@ -79,7 +79,7 @@
     <circle cx="1490" cy="700" r="1.6" fill="#BDF8FF"/>
     <circle cx="1360" cy="778" r="1.7" fill="#8BEFFF"/>
     <circle cx="1120" cy="820" r="1.4" fill="#BDF8FF"/>
-    <circle cx="960" cy="770" r="1.4" fill="#8BEFFF"/>
+    <circle cx="960" cy="77jj0" r="1.4" fill="#8BEFFF"/>
     <circle cx="260" cy="760" r="1.7" fill="#BDF8FF"/>
     <circle cx="160" cy="620" r="1.5" fill="#8BEFFF"/>
     <circle cx="110" cy="452" r="1.4" fill="#BDF8FF"/>
