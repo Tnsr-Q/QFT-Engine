@@ -1,19 +1,3 @@
-Absolutely — here’s a Version 2 that’s more cinematic, more premium, and more “flagship open-source physics engine.”
-
-This one adds:
-	•	deeper glow layers
-	•	orbital rings
-	•	curved connector paths
-	•	more dimensional spacing
-	•	stronger title treatment
-	•	a cleaner futuristic systems-map feel
-
-Save it as:
-
-assets/qft-engine-hero.svg
-
-Version 2 SVG
-
 <svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="140" y1="80" x2="1460" y2="820" gradientUnits="userSpaceOnUse">
