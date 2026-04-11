@@ -1,15 +1,3 @@
-Perfect — here’s a drop-in SVG hero graphic you can save as:
-
-assets/qft-engine-hero.svg
-
-Then your README can use it exactly as written before.
-
-This design gives you:
-	•	a central core node
-	•	circular connected subsystem particles
-	•	a dark, premium GitHub-friendly look
-	•	labels that match the repo architecture
-	•	no external assets or fonts required
 
 Save this as assets/qft-engine-hero.svg
 
