@@ -112,7 +112,7 @@ Domain-specific solver families for QFT-style workflows	JAX, PyTorch Lightning, 
 
 </div>
 
-
+<div align="center">
 What makes it different
 	•	It is built around solver families, not a single algorithm.
 	•	It treats execution topology as part of the architecture, not an afterthought.
