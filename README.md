@@ -548,10 +548,3 @@ Research computation, validated execution, and reproducible verification.
 
 </div>
 ```
-
-
-Two upgrades would make this even better:
-
-First, replace the Mermaid particle map with a custom SVG in assets/particle-map.svg for a much more cinematic connected-node look.
-
-Second, add a real CI badge from .github/workflows/quft-verify.yml once the repo is public.
