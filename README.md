@@ -1,430 +1,263 @@
+Absolutely — here’s a Version 2 that’s more cinematic, more premium, and more “flagship open-source physics engine.”
 
-<div align="center">
+This one adds:
+	•	deeper glow layers
+	•	orbital rings
+	•	curved connector paths
+	•	more dimensional spacing
+	•	stronger title treatment
+	•	a cleaner futuristic systems-map feel
 
-# QFT-Engine
+Save it as:
 
-### High-performance verification framework for computational QFT workflows
+assets/qft-engine-hero.svg
 
-<p>
-  A research-grade engine for symbolic consistency checks, renormalization flow analysis,
-  spectral methods, Regge trajectory solving, bootstrap experiments, and distributed Hessian telemetry.
-</p>
+Version 2 SVG
 
-<p>
-  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/JAX-XLA%20Accelerated-FC6D26?style=for-the-badge" alt="JAX">
-  <img src="https://img.shields.io/badge/PyTorch-Lightning-red?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch Lightning">
-  <img src="https://img.shields.io/badge/pytest-Tested-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="pytest">
-  <img src="https://img.shields.io/badge/DeepSpeed-Distributed-5B21B6?style=for-the-badge" alt="DeepSpeed">
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-</p>
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="80" x2="1460" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#050B16"/>
+      <stop offset="1" stop-color="#0B1426"/>
+    </linearGradient>
 
-</div>
+    <radialGradient id="ambient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 450) rotate(90) scale(420 420)">
+      <stop stop-color="#25D9FF" stop-opacity="0.16"/>
+      <stop offset="0.45" stop-color="#25D9FF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#25D9FF" stop-opacity="0"/>
+    </radialGradient>
 
----
+    <radialGradient id="coreAura" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 450) rotate(90) scale(170 170)">
+      <stop stop-color="#73F7FF" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#73F7FF" stop-opacity="0"/>
+    </radialGradient>
 
-## Overview
+    <radialGradient id="nodeAura" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(0 0) rotate(90) scale(90 90)">
+      <stop stop-color="#47F1E7" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#47F1E7" stop-opacity="0"/>
+    </radialGradient>
 
-**QFT-Engine** is a modular verification and analysis framework for advanced theoretical and numerical physics workflows.
+    <filter id="blur32" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="32"/>
+    </filter>
 
-It brings together:
+    <filter id="blur18" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
 
-- symbolic validation of formal constraints
-- renormalization group and flow-based solvers
-- spectral and dispersive analysis
-- bootstrap and Regge-trajectory methods
-- distributed Hessian estimation and precision control
-- schema-enforced outputs, device-mesh abstraction, and adaptive tolerance governance
+    <filter id="blur8" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
 
-This repository is best understood as a **verification stack** for research computation — not a consumer-facing application, but an extensible engine for running, testing, and auditing specialized numerical physics pipelines. 
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
 
----
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0H0V44" stroke="#D8F7FF" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
 
-## Architecture
+    <linearGradient id="lineGrad" x1="450" y1="200" x2="1150" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6AF4FF" stop-opacity="0.12"/>
+      <stop offset="0.5" stop-color="#6AF4FF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#6AF4FF" stop-opacity="0.12"/>
+    </linearGradient>
 
+    <linearGradient id="ringGrad" x1="620" y1="260" x2="980" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#71F7FF" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#71F7FF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#71F7FF" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
 
+  <!-- Background -->
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+
+  <!-- Large ambient glow -->
+  <circle cx="800" cy="450" r="420" fill="url(#ambient)"/>
+
+  <!-- Decorative distant particles -->
+  <g opacity="0.72">
+    <circle cx="132" cy="108" r="1.6" fill="#BDF8FF"/>
+    <circle cx="210" cy="204" r="1.8" fill="#A4F2FF"/>
+    <circle cx="356" cy="128" r="1.6" fill="#BDF8FF"/>
+    <circle cx="520" cy="86" r="1.4" fill="#8BEFFF"/>
+    <circle cx="690" cy="140" r="1.4" fill="#BDF8FF"/>
+    <circle cx="910" cy="92" r="1.8" fill="#8BEFFF"/>
+    <circle cx="1130" cy="126" r="1.4" fill="#BDF8FF"/>
+    <circle cx="1288" cy="170" r="1.8" fill="#8BEFFF"/>
+    <circle cx="1454" cy="108" r="1.5" fill="#BDF8FF"/>
+    <circle cx="1490" cy="700" r="1.6" fill="#BDF8FF"/>
+    <circle cx="1360" cy="778" r="1.7" fill="#8BEFFF"/>
+    <circle cx="1120" cy="820" r="1.4" fill="#BDF8FF"/>
+    <circle cx="960" cy="770" r="1.4" fill="#8BEFFF"/>
+    <circle cx="260" cy="760" r="1.7" fill="#BDF8FF"/>
+    <circle cx="160" cy="620" r="1.5" fill="#8BEFFF"/>
+    <circle cx="110" cy="452" r="1.4" fill="#BDF8FF"/>
+    <circle cx="1510" cy="440" r="1.6" fill="#BDF8FF"/>
+  </g>
+
+  <!-- Orbit rings -->
+  <g>
+    <circle cx="800" cy="450" r="280" stroke="url(#ringGrad)" stroke-width="1.5"/>
+    <circle cx="800" cy="450" r="332" stroke="#85F7FF" stroke-opacity="0.08" stroke-width="1"/>
+    <circle cx="800" cy="450" r="208" stroke="#85F7FF" stroke-opacity="0.07" stroke-width="1"/>
+  </g>
+
+  <!-- Curved connectors -->
+  <g stroke="url(#lineGrad)" stroke-width="2.2" fill="none" filter="url(#blur8)">
+    <path d="M800 450 C800 320 800 250 800 170"/>
+    <path d="M800 450 C890 360 980 300 1040 250"/>
+    <path d="M800 450 C950 450 1060 450 1140 450"/>
+    <path d="M800 450 C900 540 980 620 1040 650"/>
+    <path d="M800 450 C800 560 800 640 800 730"/>
+    <path d="M800 450 C700 540 620 620 560 650"/>
+    <path d="M800 450 C650 450 540 450 460 450"/>
+    <path d="M800 450 C710 360 620 300 560 250"/>
+  </g>
+
+  <!-- Outer orbital links -->
+  <g stroke="#8DF8FF" stroke-opacity="0.10" stroke-width="1.4" fill="none">
+    <path d="M800 170 C930 175 1005 205 1040 250"/>
+    <path d="M1040 250 C1095 300 1128 360 1140 450"/>
+    <path d="M1140 450 C1128 540 1095 600 1040 650"/>
+    <path d="M1040 650 C980 705 900 740 800 730"/>
+    <path d="M800 730 C700 740 620 705 560 650"/>
+    <path d="M560 650 C505 600 472 540 460 450"/>
+    <path d="M460 450 C472 360 505 300 560 250"/>
+    <path d="M560 250 C620 195 700 165 800 170"/>
+  </g>
+
+  <!-- Core back glow -->
+  <circle cx="800" cy="450" r="150" fill="url(#coreAura)" filter="url(#blur32)"/>
+
+  <!-- Core node -->
+  <g filter="url(#softGlow)">
+    <circle cx="800" cy="450" r="110" fill="#0D1A2C" stroke="#7CF7FF" stroke-width="3"/>
+    <circle cx="800" cy="450" r="88" fill="none" stroke="#7CF7FF" stroke-opacity="0.22" stroke-width="1.6"/>
+    <circle cx="800" cy="450" r="66" fill="none" stroke="#7CF7FF" stroke-opacity="0.12" stroke-width="1"/>
+  </g>
+
+  <text x="800" y="440" fill="white" font-size="32" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">QFT-Engine</text>
+  <text x="800" y="476" fill="#A7DDEA" font-size="16" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">verification stack</text>
+
+  <!-- Reusable node style via grouping -->
+  <!-- Top -->
+  <g transform="translate(800 170)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="21" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">RGE</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">flow evolution</text>
+  </g>
+
+  <!-- Top right -->
+  <g transform="translate(1040 250)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="20" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Regge</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">trajectory solvers</text>
+  </g>
+
+  <!-- Right -->
+  <g transform="translate(1140 450)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="19" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Hessian</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">telemetry</text>
+  </g>
+
+  <!-- Bottom right -->
+  <g transform="translate(1040 650)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="19" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Mesh</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">topology layer</text>
+  </g>
+
+  <!-- Bottom -->
+  <g transform="translate(800 730)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="18" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Tolerance</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">governance</text>
+  </g>
+
+  <!-- Bottom left -->
+  <g transform="translate(560 650)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="19" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Tests</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">verification suite</text>
+  </g>
+
+  <!-- Left -->
+  <g transform="translate(460 450)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="18" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Schemas</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">proto / contracts</text>
+  </g>
+
+  <!-- Top left -->
+  <g transform="translate(560 250)">
+    <circle r="72" fill="#0D1A2C" stroke="#55EBFF" stroke-width="2.5"/>
+    <circle r="98" fill="url(#nodeAura)"/>
+    <circle r="79" fill="none" stroke="#7DF7FF" stroke-opacity="0.12" stroke-width="1"/>
+    <text y="-7" fill="white" font-size="17" font-family="Arial, Helvetica, sans-serif" text-anchor="middle" font-weight="700">Bootstrap</text>
+    <text y="21" fill="#A7DDEA" font-size="12.5" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">spectral methods</text>
+  </g>
+
+  <!-- Tiny connection particles -->
+  <g fill="#8FF8FF">
+    <circle cx="800" cy="310" r="3.2"/>
+    <circle cx="920" cy="340" r="3.2"/>
+    <circle cx="995" cy="450" r="3.2"/>
+    <circle cx="930" cy="585" r="3.2"/>
+    <circle cx="800" cy="595" r="3.2"/>
+    <circle cx="670" cy="585" r="3.2"/>
+    <circle cx="605" cy="450" r="3.2"/>
+    <circle cx="675" cy="340" r="3.2"/>
+  </g>
+
+  <!-- Header title -->
+  <text x="108" y="104" fill="white" font-size="58" font-family="Arial, Helvetica, sans-serif" font-weight="700">QFT-Engine</text>
+  <text x="108" y="147" fill="#95D7E8" font-size="23" font-family="Arial, Helvetica, sans-serif">
+    High-performance verification framework for computational QFT workflows
+  </text>
+
+  <!-- Header accent line -->
+  <line x1="108" y1="172" x2="620" y2="172" stroke="#6AF4FF" stroke-opacity="0.45" stroke-width="2"/>
+
+  <!-- Bottom caption -->
+  <text x="800" y="848" fill="#7CB4C6" font-size="16" font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    symbolic validation • solver orchestration • distributed execution • structured scientific outputs
+  </text>
+</svg>
+
+Use it in your README like this:
 
 <p align="center">
-  <em>End-to-end data flow across validation, solver execution, spectral analysis, topology coordination, logging, serialization, and downstream system output.</em>
+  <img src="./assets/qft-engine-hero.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
+  <em>QFT-Engine connects symbolic validation, solver execution, topology-aware orchestration, and reproducible outputs in one research-grade verification stack.</em>
 </p>
----
 
-## Why this project stands out
+If you want the next hit, I can give you one of these three styles:
 
-<table>
-  <tr>
-    <td valign="top" width="33%">
-      <h3>Physics-aware computation</h3>
-      <p>Built around domain-specific solver families including RGE, spectral, bootstrap, and Regge workflows rather than generic ML-only infrastructure.</p>
-    </td>
-    <td valign="top" width="33%">
-      <h3>Modern execution stack</h3>
-      <p>Combines NumPy, SciPy, JAX, PyTorch Lightning, DeepSpeed, TensorBoard, and distributed execution patterns in one codebase.</p>
-    </td>
-    <td valign="top" width="33%">
-      <h3>Governed outputs</h3>
-      <p>Schema enforcement, mesh abstraction, and tolerance ledgers provide structural validation, execution coordination, and reproducibility support.</p>
-    </td>
-  </tr>
-</table>
-
----
-
-## Core capabilities
-
-### Numerical and solver systems
-- **RGE solving** for renormalization-flow experiments
-- **Flow-based solvers** for spectral and dynamical analysis
-- **Discretized bootstrap routines** for constrained amplitude workflows
-- **Regge trajectory solvers** across standard, `vmap`, `pmap`, and `shard_map` execution paths
-- **JAX Hessian estimation** with quantized variants and distributed support
-
-### Validation and consistency tooling
-- symbolic BRST-style verification
-- residual and predicate validation
-- spectral consistency checks
-- runtime schema enforcement for structured solver outputs
-
-### Infrastructure and execution layers
-- JAX and PyTorch unified topology abstractions
-- tolerance priors and adaptive ledger tracking
-- PyTorch Lightning callbacks for Hessian telemetry, ZeRO-3, FP8, and CPU fallback
-- profiling, TensorBoard, and cloud deployment scripts
-
-These capabilities are reflected directly in the `src/`, `configs/`, `scripts/`, and `tests/` layout of the repository. 
-
----
-
-## Repository structure
-
-```text
-QFT-Engine/
-├── configs/
-│   ├── params.yaml
-│   └── tolerance_priors.yaml
-├── docker/
-│   └── Dockerfile
-├── scripts/
-│   ├── deploy_gce.sh
-│   ├── deploy_profiler_gce.sh
-│   ├── deploy_universal.sh
-│   ├── diagnose_precision.py
-│   ├── launch_tensorboard_proxy.sh
-│   └── run_suite.sh
-├── src/
-│   ├── bootstrap_solver.py
-│   ├── brst_checker.py
-│   ├── flow_solver.py
-│   ├── hessian_jax.py
-│   ├── hessian_qjax.py
-│   ├── optimizer.py
-│   ├── regge_bootstrap.py
-│   ├── regge_jax_solver.py
-│   ├── regge_pmap_solver.py
-│   ├── regge_shard_map.py
-│   ├── regge_vmap_solver.py
-│   ├── rge_solver.py
-│   ├── spectral_density.py
-│   ├── spectral_flow.py
-│   ├── unified_topology.py
-│   ├── validators.py
-│   ├── callbacks/
-│   ├── discovery/
-│   ├── mesh/
-│   ├── proto/
-│   ├── spectral/
-│   ├── tolerance/
-│   └── truth/
-├── tests/
-└── .github/workflows/
-
-
-⸻
-
-Key subsystems
-
-1. Solver layer
-
-The solver surface spans multiple computational styles and execution models:
-	•	src/rge_solver.py
-	•	src/flow_solver.py
-	•	src/spectral_flow.py
-	•	src/bootstrap_solver.py
-	•	src/regge_bootstrap.py
-	•	src/regge_jax_solver.py
-	•	src/regge_vmap_solver.py
-	•	src/regge_pmap_solver.py
-	•	src/regge_shard_map.py
-	•	src/hessian_jax.py
-	•	src/hessian_qjax.py
-
-This design suggests a repo optimized for comparing methods, scaling execution paths, and validating behavior across both classical and accelerated numerical workflows.
-
-2. Schema and serialization layer
-
-The src/proto/ package provides:
-	•	constraint schemas
-	•	registries
-	•	return-schema definitions
-	•	schema enforcement
-	•	serializers
-	•	atomic checkpoint support
-
-That gives the project a structured contract layer around solver outputs instead of relying on loose dictionaries alone.
-
-3. Mesh and topology layer
-
-The src/mesh/ package provides:
-	•	topology abstractions
-	•	execution schemes
-	•	unified mesh coordination
-
-This makes the codebase more execution-aware than a typical research repo and positions it better for distributed and cross-framework workflows.
-
-4. Tolerance governance
-
-The src/tolerance/ package and configs/tolerance_priors.yaml indicate an explicit system for:
-	•	tolerance baselines
-	•	bounded adaptation
-	•	regime detection
-	•	residual-aware control
-
-That is a strong architectural signal: numerical thresholds are treated as managed system state rather than hidden constants.
-
-5. Callback and distributed telemetry layer
-
-The callback set includes:
-	•	checkpointed Hessian paths
-	•	distributed Hessian monitoring
-	•	ZeRO-3 variants
-	•	FP8 variants
-	•	CPU fallback variants
-	•	precision control
-
-This gives the repo serious experimentation and runtime-observability value for large-scale or precision-sensitive workloads.
-
-⸻
-
-Installation
-
-Prerequisites
-	•	Python 3.10+
-	•	pip
-	•	optional GPU / multi-device environment for advanced execution paths
-	•	Docker for containerized runs
-
-Install dependencies
-
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-
-The repository requirements include NumPy, SciPy, JAX, pytest, PyYAML, PyTorch, PyTorch Lightning, TensorBoard, Google Cloud Storage support, DeepSpeed, PyArrow, and Pydantic.
-
-Optional package sometimes used directly
-
-pip install sympy
-
-
-⸻
-
-Quick start
-
-Run the full verification suite
-
-bash scripts/run_suite.sh
-
-Freeze adaptive tolerances for deterministic replay
-
-bash scripts/run_suite.sh --freeze --audit-verify
-
-Run tests directly
-
-pytest tests/ -v
-
-Build and run with Docker
-
-docker build -t qft-engine -f docker/Dockerfile .
-docker run --rm qft-engine
-
-The repo ships both a test wrapper and a Dockerfile for reproducible execution.
-
-⸻
-
-Example workflows
-
-JAX sharded Regge execution
-
-import jax.numpy as jnp
-from src.regge_shard_map import ShardedReggeSolver
-
-solver = ShardedReggeSolver(N_t=256)
-delta = jnp.zeros(256) + 0.05
-
-trajectory = solver.scan_regge_trajectory_sharded(delta)
-certificate = solver.verify_fakeon_virtualization(trajectory)
-
-print(certificate["status"])
-
-Precision diagnostics
-
-python scripts/diagnose_precision.py
-
-TensorBoard helper
-
-bash scripts/launch_tensorboard_proxy.sh
-
-Cloud-oriented execution
-
-export BUCKET="your-verify-bucket"
-bash scripts/deploy_gce.sh
-
-
-⸻
-
-Configuration
-
-configs/params.yaml
-
-This file contains the main runtime controls for:
-	•	roadmap constants
-	•	solver tolerances
-	•	iteration limits
-	•	checkpoint interval
-	•	precision target
-	•	high-level assumptions
-
-configs/tolerance_priors.yaml
-
-This file defines tolerance policies for subsystems such as:
-	•	rge_atol
-	•	hessian_pl
-	•	bootstrap_unitarity
-	•	regge_pole
-
-Together these files form the numerical control plane for the engine.
-
-⸻
-
-Testing strategy
-
-The test suite spans more than a simple smoke check. Current test coverage includes:
-	•	regression behavior
-	•	flow fixed-point checks
-	•	bootstrap and JAX integration
-	•	spectral representation and robustness
-	•	nonperturbative unitarity checks
-	•	Regge distributed execution
-	•	tolerance ledger validation
-	•	memory fallback paths
-	•	profiler and compression integration
-	•	GCE and multi-device integration
-
-Representative test files include:
-	•	test_bootstrap_jax.py
-	•	test_flow_fixed_point.py
-	•	test_nonperturbative_unitarity.py
-	•	test_regge_pl_integration.py
-	•	test_shardmap_zero3_integration.py
-	•	test_tolerance_ledger.py
-	•	test_robust_spectral.py
-
-This is one of the repo’s strongest qualities: the architecture is accompanied by a substantial verification surface.
-
-⸻
-
-Included operational tooling
-
-Local and CI execution
-	•	scripts/run_suite.sh
-
-Precision and runtime inspection
-	•	scripts/diagnose_precision.py
-
-Profiling and visualization
-	•	scripts/launch_tensorboard_proxy.sh
-	•	scripts/deploy_profiler_gce.sh
-
-Cloud deployment
-	•	scripts/deploy_gce.sh
-	•	scripts/deploy_universal.sh
-
-GitHub Actions
-	•	.github/workflows/quft-verify.yml
-
-This gives the project a strong “research + systems” identity rather than a standalone notebook-style workflow.
-
-⸻
-
-Technology stack
-
-<div align="center">
-
-
-Area	Tools
-Numerical computing	NumPy, SciPy, JAX
-ML / distributed	PyTorch, PyTorch Lightning, DeepSpeed
-Validation	Pydantic
-Storage / serialization	PyYAML, PyArrow
-Testing	pytest
-Observability	TensorBoard
-Packaging / runtime	Docker
-
-</div>
-
-
-
-⸻
-
-Design philosophy
-
-QFT-Engine appears to be organized around a few clear principles:
-
-Structured computation
-
-Solver output is not treated as an afterthought. The repo includes schema, registry, serializer, and checkpoint layers to keep computational results traceable and structured.
-
-Execution-aware research code
-
-The presence of vmap, pmap, shard_map, callback variants, mesh abstractions, and deployment scripts shows that scalability and runtime behavior are first-class concerns.
-
-Verification over hype
-
-The repository leans heavily into tests, tolerances, validations, and explicit infrastructure around residuals and execution modes.
-
-Modular extension
-
-Subsystems are separated cleanly enough that contributors can extend:
-	•	solver implementations
-	•	validation layers
-	•	topology backends
-	•	tolerance policies
-	•	callback instrumentation
-
-⸻
-
-Ideal use cases
-
-This repository is a strong fit for people who want to:
-	•	prototype or extend computational QFT verification workflows
-	•	experiment with JAX-native and distributed solver implementations
-	•	validate numerical routines with reproducible tests and tolerances
-	•	build infrastructure around schema-validated scientific computation
-	•	explore precision-sensitive training or Hessian-monitoring workflows
-
-⸻
-
-Contributing
-
-Contributions are easiest to review when they follow the structure already present in the repo:
-	1.	install dependencies
-	2.	run the existing test suite
-	3.	keep changes scoped to a subsystem
-	4.	update configs, tests, and documentation with behavior changes
-	5.	preserve or improve validation and reproducibility pathways
-
-⸻
-
+A. more physics-heavy
+B. more minimal / Apple-clean
+C. ultra-cinematic with denser orbital particles and neon depth
