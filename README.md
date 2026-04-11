@@ -57,7 +57,7 @@
       <stop offset="0.5" stop-color="#71F7FF" stop-opacity="0.08"/>
       <stop offset="1" stop-color="#71F7FF" stop-opacity="0.18"/>
     </linearGradient>
-  </defs>
+     </defs>
 
   <!-- Background -->
   <rect width="1600" height="900" fill="url(#bg)"/>
@@ -241,8 +241,3 @@ Use it in your README like this:
   <em>QFT-Engine connects symbolic validation, solver execution, topology-aware orchestration, and reproducible outputs in one research-grade verification stack.</em>
 </p>
 
-If you want the next hit, I can give you one of these three styles:
-
-A. more physics-heavy
-B. more minimal / Apple-clean
-C. ultra-cinematic with denser orbital particles and neon depth
