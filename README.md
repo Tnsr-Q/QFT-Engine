@@ -1,7 +1,3 @@
-Yes — the cleanest way to get that elite / flagship repo feel is to turn the “cards” into a particle-map section using Mermaid. GitHub renders Mermaid natively, and circular nodes plus connections give you the exact “particle model” aesthetic without needing custom CSS. The repo structure and subsystem claims below are aligned to the exported project files and layout.  ￼
-
-Here’s a full upgraded README you can drop in:
-
 <div align="center">
 
 # QFT-Engine
