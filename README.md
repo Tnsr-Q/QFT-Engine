@@ -91,12 +91,12 @@ Overview
 QFT-Engine is a research-grade verification and analysis framework for advanced computational physics workflows.
 
 It combines:
-	•	symbolic consistency checks
-	•	renormalization group and flow-based solvers
-	•	spectral and dispersive analysis
-	•	bootstrap and Regge-trajectory workflows
-	•	distributed Hessian estimation and precision control
-	•	schema-enforced outputs, device-mesh coordination, and adaptive tolerance governance
+- symbolic consistency checks
+- renormalization group and flow-based solvers
+- spectral and dispersive analysis
+- bootstrap and Regge-trajectory workflows
+- distributed Hessian estimation and precision control
+- schema-enforced outputs, device-mesh coordination, and adaptive tolerance governance
 
 This repository is best understood as a verification stack, not a generic end-user application. It is designed to run, compare, validate, and audit specialized solver pipelines across multiple runtime backends and execution modes.
 
