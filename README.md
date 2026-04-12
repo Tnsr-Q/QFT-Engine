@@ -224,7 +224,10 @@ QFT-Engine/
 ├── tests/
 └── .github/workflows/
 ```
-
+---
+<p align="center">
+  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
+</p>
 ---
 
 ## Key Subsystems
