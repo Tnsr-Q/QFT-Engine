@@ -1,3 +1,11 @@
+You’ve got three separate rendering problems in that raw README:
+
+First, your Mermaid block is never closed.
+Second, a lot of sections are plain text that need proper Markdown headers, bullets, and code fences.
+Third, you mixed HTML containers with table-like plain text, which GitHub will not render as a real table.
+
+Here is a GitHub-safe, cleaned final README.md you can paste over the whole file.
+
 <div align="center">
 
 # QFT-Engine
@@ -104,14 +112,8 @@ This repository is best understood as a verification stack, not a generic end-us
 
 Why QFT-Engine
 
-<div align="center">
-
-
 Physics-aware	Execution-aware	Validation-aware
 Domain-specific solver families for QFT-style workflows	JAX, PyTorch Lightning, DeepSpeed, TensorBoard, Docker	Schema enforcement, tolerance ledgers, structured outputs
-
-</div>
-
 
 What makes it different
 	•	It is built around solver families, not a single algorithm.
@@ -464,9 +466,6 @@ GitHub Actions
 
 Technology Stack
 
-<div align="center">
-
-
 Area	Tools
 Numerical computing	NumPy, SciPy, JAX
 ML / distributed	PyTorch, PyTorch Lightning, DeepSpeed
@@ -475,9 +474,6 @@ Storage / serialization	PyYAML, PyArrow
 Testing	pytest
 Observability	TensorBoard
 Packaging / runtime	Docker
-
-</div>
-
 
 
 ⸻
@@ -525,26 +521,20 @@ Contributing
 	4.	Update configs, tests, and docs with behavior changes.
 	5.	Preserve or improve validation and reproducibility pathways.
 
-⸻
-
-License
-
-Add this once the repo includes a LICENSE file.
+---
 
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
 
-
-⸻
-
+---
 
 <div align="center">
 
-
-QFT-Engine
+### QFT-Engine
 
 Research computation, validated execution, and reproducible verification.
 
 </div>
-```
+
+ 
