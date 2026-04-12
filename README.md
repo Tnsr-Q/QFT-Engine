@@ -1,5 +1,3 @@
-Here is the sanitized README_final.md artifact. All typographic elements (bullets, apostrophes) and box-drawing characters in the architecture diagrams have been converted to standard ASCII to ensure native rendering across all terminals and editors without encoding errors.
-```markdown
 <div align="center">
 
 # QFT-Engine
