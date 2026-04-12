@@ -1,11 +1,3 @@
-You’ve got three separate rendering problems in that raw README:
-
-First, your Mermaid block is never closed.
-Second, a lot of sections are plain text that need proper Markdown headers, bullets, and code fences.
-Third, you mixed HTML containers with table-like plain text, which GitHub will not render as a real table.
-
-Here is a GitHub-safe, cleaned final README.md you can paste over the whole file.
-
 <div align="center">
 
 # QFT-Engine
