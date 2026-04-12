@@ -24,7 +24,7 @@ into one research-grade verification stack.
 </div>
 ---
 <p align="center">
-<img src="./assets/qft-engine-hero2.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
+<img src="/assets/qft-engine-hero2.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
 </p>
 <p align="center">
 <em>QFT-Engine connects symbolic validation, solver execution, topology-aware orchestration, and reproducible outputs in one research-grade verification stack.</em>
