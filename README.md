@@ -32,11 +32,11 @@
 ---
 
 <p align="center">
-  <img src="./assets/qft-engine-data-flow.png" alt="QFT-Engine data flow infographic" width="100%">
+  <img src="./assets/qft-engine-hero.svg" alt="QFT-Engine architecture and particle-map visualization" width="100%">
 </p>
 
 <p align="center">
-  <em>End-to-end flow across validation, solver execution, topology coordination, logging, and structured outputs.</em>
+  <em>QFT-Engine connects symbolic validation, solver execution, topology-aware orchestration, and reproducible outputs in one research-grade verification stack.</em>
 </p>
 
 ---
