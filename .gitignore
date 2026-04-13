@@ -3,3 +3,4 @@ __pycache__/
 
 # Go build artifacts
 /QFT-Engine
+/bin/
