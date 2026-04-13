@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -179,14 +180,14 @@ func lookupComment(m commentMap, path []int32) string {
 }
 
 func pathKey(path []int32) string {
-	s := ""
+	var b strings.Builder
 	for i, p := range path {
 		if i > 0 {
-			s += "."
+			b.WriteByte('.')
 		}
-		s += fmt.Sprintf("%d", p)
+		fmt.Fprintf(&b, "%d", p)
 	}
-	return s
+	return b.String()
 }
 
 func shortTypeName(fqn string) string {

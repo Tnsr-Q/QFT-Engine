@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -14,16 +13,4 @@ func cleanComment(s string) string {
 		cleaned = append(cleaned, strings.TrimPrefix(l, " "))
 	}
 	return strings.TrimSpace(strings.Join(cleaned, "\n"))
-}
-
-// pathKeyFmt is a helper for building comment map keys from variadic ints.
-func pathKeyFmt(parts ...int32) string {
-	s := ""
-	for i, p := range parts {
-		if i > 0 {
-			s += "."
-		}
-		s += fmt.Sprintf("%d", p)
-	}
-	return s
 }
