@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package tensorq.codestreamer.v1;
+
+option go_package = "github.com/Tnsr-Q/QFT-Engine/gen/go/codestreamerv1";
+
+// PhysicsService defines the RPC pipeline for streaming generated code.
+service PhysicsService {
+  // StreamSimulation initiates a server-side stream.
+  // The client requests a specific model configuration, and the server
+  // responds with a continuous stream of CodeChunks as they are generated.
+  rpc StreamSimulation(SimRequest) returns (stream CodeChunk);
+}
+
+// SimRequest carries the prompt/parameters needed to generate the physics
+// model.
+message SimRequest {
+  // A unique identifier for the requested model type (e.g.
+  // "black_hole_merger").
+  string model_type = 1;
+
+  // Flexible parameters to customise the generation.
+  map<string, string> parameters = 2;
+
+  // Optional session ID to link this generation to a specific user context.
+  string session_id = 3;
+}
+
+// CodeChunk represents a fragment of the generated Python code.
+message CodeChunk {
+  // The raw string of Python code.
+  string code = 1;
+
+  // Sequence number to ensure logical ordering.
+  int64 sequence_id = 2;
+
+  // Metadata hint for the frontend to decide when to execute the buffer.
+  ChunkType chunk_type = 3;
+}
+
+// ChunkType helps the frontend categorise parts of the script for
+// optimisation.
+enum ChunkType {
+  CHUNK_TYPE_UNSPECIFIED = 0;
+
+  // e.g. "import numpy as np" — safe to run immediately.
+  CHUNK_TYPE_IMPORT = 1;
+
+  // e.g. "def calculate_trajectory(t):" — buffer this.
+  CHUNK_TYPE_DEFINITION = 2;
+
+  // e.g. "print(calculate_trajectory(10))" — trigger run.
+  CHUNK_TYPE_EXECUTION = 3;
+
+  // Signal that the stream is complete.
+  CHUNK_TYPE_EOF = 4;
+}

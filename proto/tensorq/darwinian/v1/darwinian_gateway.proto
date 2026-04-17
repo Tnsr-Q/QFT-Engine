@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package tensorq.darwinian.v1;
+
+option go_package = "github.com/Tnsr-Q/QFT-Engine/gen/go/darwinianv1";
+
+// CortexGateway is the unified entry point for the Darwinian Grid.
+// It handles both the generation of physics logic (Data Plane) and
+// the mutation of network topology (Control Plane).
+service CortexGateway {
+  // StreamSimulation streams generated Python logic over HTTP/3 to the
+  // browser (Pyodide). This utilises the ConnectRPC pipeline for
+  // zero-latency loading.
+  rpc StreamSimulation(SimRequest) returns (stream CodeChunk);
+
+  // UpdateAlphaRoute is called by the Genetic Algorithm (The Overseer)
+  // when a new "Alpha" wins. It triggers the eBPF loader to update the
+  // kernel hash map so traffic for a VIP is redirected to the winning pod.
+  rpc UpdateAlphaRoute(RouteMutation) returns (RouteAck);
+}
+
+// SimRequest carries the prompt/parameters needed to generate the physics
+// model.
+message SimRequest {
+  // A unique identifier for the requested model (e.g. "black_hole_merger_v4").
+  string model_id = 1;
+
+  // Dynamic physics parameters injected into the Python template.
+  map<string, string> hyper_parameters = 2;
+
+  // The client's preferred chunk size hint (optional optimisation).
+  int32 chunk_size_hint = 3;
+}
+
+// CodeChunk represents a fragment of generated code.
+message CodeChunk {
+  // The raw Python code fragment.
+  string content = 1;
+
+  // Hints for the Pyodide runtime to optimise execution.
+  ChunkType type = 2;
+
+  // Sequence ID to handle UDP/QUIC out-of-order reassembly.
+  uint64 sequence_id = 3;
+}
+
+// ChunkType helps the frontend categorise parts of the script for
+// optimisation.
+enum ChunkType {
+  CHUNK_TYPE_UNSPECIFIED = 0;
+
+  // Safe to run immediately (e.g. "import numpy as np").
+  CHUNK_TYPE_PREAMBLE = 1;
+
+  // Function definitions or heavy math logic — buffer, do not execute.
+  CHUNK_TYPE_DEFINITION = 2;
+
+  // The trigger command (e.g. "run_simulation()") — execute the buffer.
+  CHUNK_TYPE_EXECUTION = 3;
+}
+
+// RouteMutation is the request payload for UpdateAlphaRoute.
+message RouteMutation {
+  string mutation_id = 1;
+  string virtual_ip = 2;
+  string target_pod_ip = 3;
+
+  // Optional L2 hint: MAC address of the node hosting the Alpha Pod.
+  string target_mac_address = 4;
+
+  uint64 expected_route_version = 5;
+
+  // If the gateway cannot stage/commit before this duration expires it
+  // must drop the proposal.
+  uint64 ttl_ms = 6;
+
+  bool dry_run = 7;
+  uint64 epoch = 8;
+  string reason = 9;
+}
+
+// RouteStatus indicates the result of a route mutation.
+enum RouteStatus {
+  ROUTE_STATUS_UNSPECIFIED = 0;
+  ROUTE_STATUS_APPLIED = 1;
+  ROUTE_STATUS_STAGED = 2;
+  ROUTE_STATUS_REJECTED = 3;
+  ROUTE_STATUS_PROBE_FAILED = 4;
+  ROUTE_STATUS_ROLLED_BACK = 5;
+}
+
+// RouteAck is the response payload for UpdateAlphaRoute.
+message RouteAck {
+  RouteStatus status = 1;
+  string status_message = 2;
+  int64 applied_at_unix_ns = 3;
+  uint64 applied_route_version = 4;
+  repeated string checks_passed = 5;
+  repeated string checks_failed = 6;
+  string rollback_reason = 7;
+  string observability_id = 8;
+}
