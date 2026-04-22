@@ -1,0 +1,31 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install go-mod-upgrade
+        run: |
+          mkdir -p /tmp/gotools
+          export GOCACHE=/tmp/gotools/cache
+          go install github.com/oligot/go-mod-upgrade@latest
+          rm -rf /tmp/gotools
